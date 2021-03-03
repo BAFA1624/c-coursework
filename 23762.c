@@ -4,6 +4,7 @@
 #define M_PI		3.14159265358979323846
 #define M_PI_2		1.57079632679489661923
 #define M_PI_4		0.78539816339744830962
+#define M_E		    2.7182818284590452354
 
 
 // Implementing some simple complex number functionality
@@ -73,4 +74,21 @@ long double c_arg_ptr(Complex *z)
 }
 
 
-Complex h_1()
+Complex h_1(long double time)
+{
+    Complex result = {
+        .r = cosl(time) + cosl(5 * time),
+        .i = sinl(time) + sinl(5 * time)
+    };
+    return result; 
+}
+Complex h_2(long double time)
+{
+    long double x = (time - M_PI) * (time - M_PI) / 2;
+    Complex result = {
+        .r = pow(M_E, x),
+        .i = 0
+    };
+    return result;
+}
+
