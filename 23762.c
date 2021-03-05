@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 
-#define M_PI		3.14159265358979323846
-#define M_PI_2		1.57079632679489661923
-#define M_PI_4		0.78539816339744830962
-#define M_E		    2.7182818284590452354
+long double pi = 3.1415926;
+long double pi_2 = 1.5707963;
+long double pi_4 = 0.7853981;
+long double e = 2.7182818;
 
 
 // Implementing some simple complex number functionality
@@ -15,13 +16,13 @@ typedef struct Complex
     long double i;      // Imaginary part;
 } Complex;
 // Calculate square of modulus for complex numbers.
-long double c_mod_sq(Complex z) 
+long double c_mod(Complex z) 
 {
-    return z.r * z.r + z.i * z.i;
+    return sqrtl(z.r * z.r + z.i * z.i);
 }
-long double c_mod_sq_ptr(Complex *z)
+long double c_mod_ptr(Complex *z)
 {
-    return c_mod_sq(*z);
+    return c_mod(*z);
 }
 /*
 // Version of c_arg using atan2l
@@ -50,18 +51,18 @@ long double c_arg(Complex z)
             if (z.r != 0)
             {
                 // Use ternary operator to return correct expression
-                return (z.i < 0) ? atanl(z.i / z.r) - M_PI : atanl(z.i / z.r) + M_PI;
+                return (z.i < 0) ? atanl(z.i / z.r) - pi : atanl(z.i / z.r) + pi;
             } 
             else
             {
                 if (z.i == 0)
                 {
-                    fprintf(stderr, "Undefined value in <c_arg>, z.r = %ld, z.i = %ld.", z.r, z.i);
+                    fprintf(stderr, "Undefined value in <c_arg>, z.r = %Lf, z.i = %Lf.", z.r, z.i);
                     exit(-1);
                 }
                 else
                 {
-                    return (z.i > 0) ? M_PI_2 : -M_PI_2;
+                    return (z.i > 0) ? pi_2 : -pi_2;
                 }
             }
         default:
@@ -84,11 +85,42 @@ Complex h_1(long double time)
 }
 Complex h_2(long double time)
 {
-    long double x = (time - M_PI) * (time - M_PI) / 2;
+    long double x = (time - pi) * (time - pi) / 2;
     Complex result = {
-        .r = pow(M_E, x),
+        .r = powl(e, x),
         .i = 0
     };
     return result;
 }
 
+void q_3b(char *filename)
+{
+    FILE *fp = fopen(filename, "w");
+    if (!fp)
+    {
+        fprintf(stderr, "Failed to open file \"%s\" in <q_3b>", filename);
+        exit(-1);
+    }
+    long double t_ini = 0.;
+    int i, N = 100;
+    long double dt = (long double)2 * pi / N;
+    printf("\nt_ini = %Lf, dt = %Lf\n", t_ini, dt);
+    Complex y1, y2;
+    for (i = 0; i < N; ++i)
+    {
+        y1 = h_1(t_ini);
+        y2 = h_2(t_ini);
+        // printf("\n|h_1(%ld)| = |%ld %ld| = %ld, |h_2(%ld)| = |%ld %ld| = %ld\n", t_ini, y1.r, y1.i, c_mod(y1), t_ini, y2.r, y2.i, c_mod(y2));
+        fprintf(fp, "%Lf, %Lf, %Lf\n", t_ini, c_mod(y1), c_mod(y2));
+        t_ini = t_ini + dt;
+    }
+    fclose(fp);
+    putchar('\n');
+}
+
+int main()
+{
+    printf("\npi = %Lf\n", e);
+    q_3b("test.txt");
+    return 0;
+}
