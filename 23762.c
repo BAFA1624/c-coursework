@@ -2,10 +2,10 @@
 #include <math.h>
 #include <stdlib.h>
 
-long double pi = 3.1415926;
-long double pi_2 = 1.5707963;
-long double pi_4 = 0.7853981;
-long double e = 2.7182818;
+long double pi = 3.14159265358979323846;
+long double pi_2 = 1.57079632679489661923;
+long double pi_4 = 0.78539816339744830962;
+long double e = 2.7182818284590452354;
 
 
 // Implementing some simple complex number functionality
@@ -24,59 +24,21 @@ long double c_mod_ptr(Complex *z)
 {
     return c_mod(*z);
 }
-/*
+
 // Version of c_arg using atan2l
 
 long double c_arg(Complex z)
 {
     return atan2l(z.i, z.r);
 }
-long double c_arg_ptr(Compmlex *z)
+long double c_arg_ptr(Complex *z)
 {
     return atan2l(z->i, z->r);
 }
 
-*/
-// atanl is long double arc tan.
-// Calculate argument for complex numbers.
-long double c_arg(Complex z)
-{    
-    switch (z.r > 0)
-    {
-        // Case 1 [true]: real part > 0
-        case 1: 
-            return atanl(z.i / z.r);
-        // Case 0 [false]: real part <= 0
-        case 0:
-            if (z.r != 0)
-            {
-                // Use ternary operator to return correct expression
-                return (z.i < 0) ? atanl(z.i / z.r) - pi : atanl(z.i / z.r) + pi;
-            } 
-            else
-            {
-                if (z.i == 0)
-                {
-                    fprintf(stderr, "Undefined value in <c_arg>, z.r = %Lf, z.i = %Lf.", z.r, z.i);
-                    exit(-1);
-                }
-                else
-                {
-                    return (z.i > 0) ? pi_2 : -pi_2;
-                }
-            }
-        default:
-            printf("\n[Defaulted in c_arg]\n");
-    }
-}
-long double c_arg_ptr(Complex *z)
-{
-    return c_arg(*z);
-}
-
-
 Complex h_1(long double time)
 {
+    // Calculate h1 using Euler's formula.
     Complex result = {
         .r = cosl(time) + cosl(5 * time),
         .i = sinl(time) + sinl(5 * time)
@@ -85,7 +47,9 @@ Complex h_1(long double time)
 }
 Complex h_2(long double time)
 {
+    // calculate exponent, x, of h2
     long double x = (time - pi) * (time - pi) / 2;
+    // Initialize Complex number with result.
     Complex result = {
         .r = powl(e, x),
         .i = 0
@@ -93,34 +57,50 @@ Complex h_2(long double time)
     return result;
 }
 
-void q_3b(char *filename)
+void q_3b(int N)
 {
-    FILE *fp = fopen(filename, "w");
-    if (!fp)
+    // Open file and check for success.
+    FILE *fp1 = fopen("3_b_1.txt", "w");
+    FILE *fp2 = fopen("3_b_2.txt", "w");
+    if (!fp1 || !fp2)
     {
-        fprintf(stderr, "Failed to open file \"%s\" in <q_3b>", filename);
+        fprintf(stderr, "Failed to open file in <q_3b>");
         exit(-1);
     }
+
+    // Decl + initialize vars for time increment, time interval,
+    // number of vars N, Complex numbers y1 & y2, increment i
     long double t_ini = 0.;
-    int i, N = 100;
+    int i;
     long double dt = (long double)2 * pi / N;
-    printf("\nt_ini = %Lf, dt = %Lf\n", t_ini, dt);
     Complex y1, y2;
+
+    // Print labels to file.
+    fprintf(fp1, "time,h1.r,h1.i");
+    fprintf(fp2, "time,h2.r,h2.i");
+
     for (i = 0; i < N; ++i)
     {
+	// Calculate vals of h1 & h2 at time t
         y1 = h_1(t_ini);
         y2 = h_2(t_ini);
-        // printf("\n|h_1(%ld)| = |%ld %ld| = %ld, |h_2(%ld)| = |%ld %ld| = %ld\n", t_ini, y1.r, y1.i, c_mod(y1), t_ini, y2.r, y2.i, c_mod(y2));
-        fprintf(fp, "%Lf, %Lf, %Lf\n", t_ini, c_mod(y1), c_mod(y2));
-        t_ini = t_ini + dt;
+
+	// Write y1 & y2 to file in terms of both their real and imaginary components.
+	// To be plotted using Python or Gnuplot.
+        fprintf(fp1, "\n%Lf, %Lf, %Lf", t_ini, y1.r, y1.i);
+	fprintf(fp2, "\n%Lf, %Lf, %Lf", t_ini, y2.r, y2.i);  
+        
+	// Increment time
+	t_ini = t_ini + dt;
     }
-    fclose(fp);
-    putchar('\n');
+
+    // Close file
+    fclose(fp1);
+    fclose(fp2);
 }
 
 int main()
 {
-    printf("\npi = %Lf\n", e);
-    q_3b("test.txt");
+    q_3b(100);
     return 0;
 }
