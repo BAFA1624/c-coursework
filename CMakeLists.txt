@@ -7,7 +7,7 @@ include_directories("/usr/include/")
 # -D_USEMINGW_ANSI_STDIO=1
 set(DCMAKE_CC_COMPILER=gcc)
 
-set(GCC_COVERAGE_COMPILE_FLAGS "-L=/usr/include/ -static -Wall -Wextra -pedantic -O3 -ggdb3")
+set(GCC_COVERAGE_COMPILE_FLAGS "-g -L=/usr/include/ -static -Wall -Wextra -pedantic -O3 -ggdb3")
 set(GCC_COVERAGE_LINK_FLAGS "-libm")
 
 add_executable(coursework 23762.c)

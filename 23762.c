@@ -7,6 +7,7 @@ long double pi_2 = 1.57079632679489661923;
 long double pi_4 = 0.78539816339744830962;
 long double e = 2.7182818284590452354;
 
+// -----------------------------------------------------
 // Implementing some simple complex number functionality
 
 typedef struct Complex {
@@ -21,6 +22,23 @@ long double c_mod_ptr(Complex* z) { return c_mod(*z); }
 // Calculate argument of complex number
 long double c_arg(Complex z) { return atan2l(z.i, z.r); }
 long double c_arg_ptr(Complex* z) { return atan2l(z->i, z->r); }
+
+void print_Complex(Complex* z)
+{
+    printf("(%Lf + %Lfi)", z->r, z->i);
+}
+
+// End of complex number functions
+// ------------------------------------------------------
+// General functionality:
+// Functions which facilitate completing the questions
+
+// Generic write error message, then exit execution
+void error_exit(char* err_msg)
+{
+    fprintf(stderr, err_msg);
+    exit(-1);
+}
 
 // Implementation of h1 & h2
 Complex h_1(long double time)
@@ -58,8 +76,7 @@ long double* arr_pop_ld(long double* arr, size_t N, size_t idx)
     }
     arr = (long double*)realloc(arr, (N - 1) * sizeof(long double));
     if (!arr) {
-	fprintf(stderr, "realloc failed in arr_pop\n");
-	exit(-1);
+	error_exit("\nrealloc failed in arr_pop_ld\n");
     }
     return arr;
 }
@@ -77,65 +94,54 @@ Complex* arr_pop_Complex(Complex* arr, size_t N, size_t idx)
     }
     arr = (Complex*)realloc(arr, (N - 1) * sizeof(Complex));
     if (!arr) {
-	fprintf(stderr, "realloc failed in arr_pop\n");
-	exit(-1);
+	error_exit("realloc failed in arr_pop_Complex\n");
     }
     return arr;
 }
 
+// Produces range of N long doubles from start -> end exclusive. Simple version of numpy.linspace
 long double* linspace_ld(long double start, long double end, int N)
 {
+    // Allocate memory for result, calculate increment size for N values in given range
     long double* arr = (long double*)malloc(N * sizeof(long double));
+    if (!arr) {
+	error_exit("\nmalloc failed in linspace_ld\n");
+    }
     long double increment = (double)(end - start) / N;
+
+    // Add values to arr, incrementing start every time
     int i;
     for (i = 0; i < N; i++) {
 	arr[i] = start;
 	start += increment;
     }
+
     return arr;
 }
 
-// Discrete Fourier Transform taking sample function
-Complex* DFT_functions(Complex (*func)(long double), long double* times, int N)
+// Produces range of N complex values for given function func for provided times
+Complex* linspace_Complex(Complex (*func)(long double), long double* times, size_t N)
 {
-    // Takes:
-    // 	- func: Ptr to function to transform.
-    // 	- times: Long double array of sample times.
-    // 	- N: Size of times, incidentally also number of samples.
-
-    // Array for complex results
-    Complex* results = (Complex*)malloc(N * sizeof(Complex));
-
-    // Variables for increment and calculating Euler's formula.
-    Complex H_n, h_k;
-    long double theta;
-    int n, k;
-
-    for (n = 0; n < N; ++n) {
-	// Initialize current value for H_n.
-	H_n.r = 0.;
-	H_n.i = 0.;
-
-	for (k = 0; k < N; ++k) {
-	    // Calculate values
-	    h_k = func(times[k]);
-	    theta = 2. * pi * n * k / N;
-
-	    // (a + bi)(c + di) = (ac - bd) + (ad + bc)i
-	    // h_k(t_k).exp(-2.pi.n.k/N):
-	    H_n.r += (h_k.r * cosl(theta) + h_k.i * sinl(theta));
-	    H_n.i += (h_k.i * cosl(theta) - h_k.r * sinl(theta));
-	}
-	// Add to results array;
-	results[n] = H_n;
+    // Allocate memory for result, error if fails
+    Complex* arr = (Complex*)malloc(N * sizeof(Complex));
+    if (!arr) {
+	error_exit("\nmalloc failed in linspace_Complex\n");
     }
-    return results;
+
+    size_t i;
+    for (i = 0; i < N; ++i) {
+	arr[i] = func(times[i]);
+    }
+    return arr;
 }
 
 // Discrete Fourier Transform taking array of samples
 Complex* DFT_samples(Complex* samples, long double* times, int N)
 {
-    Complex* results = (Complex*)malloc(N * sizeof(Complex));
+    Complex* arr = (Complex*)malloc(N * sizeof(Complex));
+    if (!arr) {
+	error_exit("\nmalloc failed in DFT_samples\n");
+    }
 
     Complex H_n, h_k;
     long double theta;
@@ -156,25 +162,41 @@ Complex* DFT_samples(Complex* samples, long double* times, int N)
 	    H_n.i += (h_k.i * cosl(theta) - h_k.r * sinl(theta));
 	}
 
-	results[n] = H_n;
+	arr[n] = H_n;
     }
 
-    return results;
+    return arr;
 }
 
-void print_Complex(Complex* z)
+// Discrete Fourier Transform taking sample function
+Complex* DFT_function(Complex (*func)(long double), long double* times, int N)
 {
-    printf("(%Lf + %Lfi)", z->r, z->i);
+    // Takes:
+    // 	- func: Ptr to function to perform DFT on.
+    // 	- times: Long double array of sample times.
+    // 	- N: Size of times, incidentally also number of samples.
+    // Does:
+    //  - Generates values for func using time values provided in times.
+    //  - Passes generated values --> DFT_samples.
+    //  - Returns result
+
+    Complex* samples = linspace_Complex(func, times, N);
+    Complex* arr = DFT_samples(samples, times, N);
+
+    return arr;
 }
 
 // Placeholder function with similar function to 'pass' statement in Python
+// Does nothing by design, e.g. for use in if/else or switch statements
 void pass() { }
 
 // Calculates IFT of N provided samples.
-// TODO: Understand why it doesn't work
 Complex* IFT(Complex* samples, size_t N, size_t skip_n)
 {
-    Complex* result = (Complex*)malloc(N * sizeof(Complex));
+    Complex* arr = (Complex*)malloc(N * sizeof(Complex));
+    if (!arr) {
+	error_exit("\nmalloc failed in IFT\n");
+    }
 
     Complex H_n, h_k;
     long double theta;
@@ -201,14 +223,19 @@ Complex* IFT(Complex* samples, size_t N, size_t skip_n)
 
 	h_k.r = (long double)h_k.r / N;
 	h_k.i = (long double)h_k.i / N;
-	result[k] = h_k;
+
+	arr[k] = h_k;
 
 	//print_Complex(&result[k]);
 	//putchar('\n');
     }
 
-    return result;
+    return arr;
 }
+
+// End of general functions
+// -----------------------------------------------------
+// Question answers
 
 // Implementation for 3b
 Complex** q_3b(long double* times, size_t N)
@@ -260,9 +287,6 @@ Complex** q_3b(long double* times, size_t N)
     fclose(fp1);
     fclose(fp2);
 
-    // Free memory
-    free(times);
-
     return results;
 }
 
@@ -274,44 +298,113 @@ Complex** q_3b(long double* times, size_t N)
 // Also returns array of {H1(w), H2(w)} for use in part 3.f
 Complex** q_3de(long double* times, size_t N)
 {
-    // Allocating memory for results, H1(w), & H2(w)
+    size_t i;
+    // Allocating memory for results; will store {H1, H2}
     Complex** results = (Complex**)malloc(2 * sizeof(Complex*));
-    Complex* H1 = (Complex*)malloc(N * sizeof(Complex));
-    Complex* H2 = (Complex*)malloc(N * sizeof(Complex));
+    if (!results) {
+	error_exit("\nmalloc failed allocating results in q_3de\n");
+    }
+
+    // Calculating H1 & H2 using DFT_function
+    Complex* H1 = DFT_function(h_1, times, N);
+    Complex* H2 = DFT_function(h_2, times, N);
+
+    // Add H1 & H2 --> results
+    results[0] = H1;
+    results[1] = H2;
+
+    // Printing H1 & H2 using custom print_Complex function
+    printf("\nPrinting H1:\n");
+    for (i = 0; i < N; ++i) {
+	printf("t = %Lf\tH1 = ", times[i]);
+	print_Complex(&H1[i]);
+	putchar('\n');
+    }
+    printf("\nPrinting H2:\n");
+    for (i = 0; i < N; ++i) {
+	printf("t = %LF\tH2 = ", times[i]);
+	print_Complex(&H2[i]);
+	putchar('\n');
+    }
+
+    return results;
 }
+
+// Applies Inverse Fourier Transform (IFT) to provided sets of H_x in samples.
+// In this case samples will provided by result of q_3de.
+Complex** q_3f(Complex** samples, size_t N)
+{
+    // Unpack H1 & H2 from samples.
+    Complex* H1 = samples[0];
+    Complex* H2 = samples[1];
+
+    // Calculate Inverse Fourier Transform of H1 & H2 respectively.
+    Complex* h1_prime = IFT(H1, N, 1);
+    Complex* h2_prime = IFT(H2, N, 0);
+
+    // Allocate memory for results, check for fail.
+    Complex** results = (Complex**)malloc(2 * sizeof(Complex*));
+    if (!results) {
+	error_exit("\nFailed malloc for results in q_3f.\n");
+    }
+
+    // Pack h1_prime & h2_prime into results so it can be returned for q_3f
+    results[0] = h1_prime;
+    results[1] = h2_prime;
+
+    return results;
+}
+
+void q_3g(Complex** data, long double* times, size_t N)
+{
+    // Open files to write data to. Check for file open error.
+    FILE* fp1 = fopen("inv_1.txt", "w");
+    FILE* fp2 = fopen("inv_2.txt", "w");
+    if (!fp1 || !fp2) {
+	error_exit("\nFailed opening file in q_3g.\n");
+    }
+
+    // Unpack data
+    Complex* h1_prime = data[0];
+    Complex* h2_prime = data[1];
+
+    // Print file headers to inv_1.txt & inv_2.txt
+    fprintf(fp1, "time,real,imag\n");
+    fprintf(fp2, "time,real,imag\n");
+
+    // Write data to file
+    size_t i;
+    for (i = 0; i < N; ++i) {
+	fprintf(fp1, "%Lf,%Lf,%Lf\n", times[i], h1_prime[i].r, h1_prime[i].i);
+	fprintf(fp2, "%Lf,%Lf,%Lf\n", times[i], h2_prime[i].r, h2_prime[i].i);
+    }
+
+    // Closing files
+    fclose(fp1);
+    fclose(fp2);
+}
+
+// End of question answers
+// -----------------------------------------------------
+// main()
 
 int main()
 {
     // Set number of samples & generate time values
-    size_t N = 100;
+    size_t i, N = 100;
     long double* times = linspace_ld(0, 2 * pi, 100);
 
     // Complete Q3.b, then pass the values --> array of array of Complexes
     Complex** h1_and_h2 = q_3b(times, N);
 
-    // Compute Discrete Fourier Transforms of samples generated in Q3.b
-    // DFT_samples performs operation on existing samples,
-    // whereas DFT_functions generates examples based on a function passed to it.
-    Complex* H1 = DFT_samples(h1_and_h2[0], times, N);
-    Complex* H2 = DFT_samples(h1_and_h2[1], times, N);
+    // Complete Q3.d & Q3.e, then pass the values --> array of array of Complexes
+    Complex** H1_and_H2 = q_3de(times, N);
 
-    // Allocate space for & compute Inverse Fourier Transform (IFT)
-    // using values from H1 & H2
-    Complex* i_h1 = IFT(H1, N, 1);
-    Complex* i_h2 = IFT(H2, N, 0);
+    Complex** prime_h1_and_h2 = q_3f(H1_and_H2, N);
 
-    // Complex values to keep next loop readable;
-    Complex H1_current;
-    Complex H2_current;
+    q_3g(prime_h1_and_h2, times, N);
 
-    int i;
-    // Printing values of DFT
-    for (i = 0; i < N; i++) {
-	H1_current = H1[i];
-	H2_current = H2[i];
-
-	//printf("t = %Lf\tH1_%d = %Lf + %Lfi\tH2_%d = %Lf + %Lfi\n", times[i], i, H1_current.r, H1_current.i, i, H2_current.r, H2_current.i);
-    }
+    /*
 
     FILE* fp1 = fopen("inv_1.txt", "w");
     FILE* fp2 = fopen("inv_2.txt", "w");
@@ -336,6 +429,7 @@ int main()
     free(h1_and_h2);
     free(H1);
     free(H2);
+    */
 
     return 0;
 }
