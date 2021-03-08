@@ -15,24 +15,12 @@ typedef struct Complex {
 } Complex;
 
 // Calculate square of modulus for complex numbers.
-long double c_mod(Complex z)
-{
-    return sqrtl(z.r * z.r + z.i * z.i);
-}
-long double c_mod_ptr(Complex* z)
-{
-    return c_mod(*z);
-}
+long double c_mod(Complex z) { return sqrtl(z.r * z.r + z.i * z.i); }
+long double c_mod_ptr(Complex* z) { return c_mod(*z); }
 
 // Calculate argument of complex number
-long double c_arg(Complex z)
-{
-    return atan2l(z.i, z.r);
-}
-long double c_arg_ptr(Complex* z)
-{
-    return atan2l(z->i, z->r);
-}
+long double c_arg(Complex z) { return atan2l(z.i, z.r); }
+long double c_arg_ptr(Complex* z) { return atan2l(z->i, z->r); }
 
 // Implementation of h1 & h2
 Complex h_1(long double time)
@@ -54,6 +42,45 @@ Complex h_2(long double time)
 	.i = 0
     };
     return result;
+}
+
+// Pops position idx from array arr of size N
+long double* arr_pop_ld(long double* arr, size_t N, size_t idx)
+{
+    if (idx >= N) {
+	fprintf(stderr, "OutOfBoundsError, attempted to pop element %ld which is out of bounds of array size %ld.\n", idx, N);
+	exit(-1);
+    }
+
+    size_t i;
+    for (i = idx; i < N - 1; ++i) {
+	arr[i] = arr[i + 1];
+    }
+    arr = (long double*)realloc(arr, (N - 1) * sizeof(long double));
+    if (!arr) {
+	fprintf(stderr, "realloc failed in arr_pop\n");
+	exit(-1);
+    }
+    return arr;
+}
+
+Complex* arr_pop_Complex(Complex* arr, size_t N, size_t idx)
+{
+    if (idx >= N) {
+	fprintf(stderr, "OutOfBoundsError, attempted to pop element %ld which is out of bounds of array size %ld.\n", idx, N);
+	exit(-1);
+    }
+
+    size_t i;
+    for (i = idx; i < N - 1; ++i) {
+	arr[i] = arr[i + 1];
+    }
+    arr = (Complex*)realloc(arr, (N - 1) * sizeof(Complex));
+    if (!arr) {
+	fprintf(stderr, "realloc failed in arr_pop\n");
+	exit(-1);
+    }
+    return arr;
 }
 
 long double* linspace_ld(long double start, long double end, int N)
@@ -128,16 +155,18 @@ Complex* DFT_samples(Complex* samples, long double* times, int N)
 	    H_n.r += (h_k.r * cosl(theta) + h_k.i * sinl(theta));
 	    H_n.i += (h_k.i * cosl(theta) - h_k.r * sinl(theta));
 	}
+
 	results[n] = H_n;
     }
 
     return results;
 }
 
-// TODO: Implement IFT once confirmed output of DFT
-Complex* IFT(Complex* samples, int N)
+// Calculates IFT of N provided samples.
+// TODO: Understand why it doesn't work
+Complex* IFT(Complex* samples, size_t N)
 {
-    Complex* results = (Complex*)malloc(N * sizeof(Complex));
+    Complex* result = (Complex*)malloc(N * sizeof(Complex));
 
     Complex H_n, h_k;
     long double theta;
@@ -161,11 +190,10 @@ Complex* IFT(Complex* samples, int N)
 
 	h_k.r = (long double)h_k.r / N;
 	h_k.i = (long double)h_k.i / N;
-	printf("h_k.r = %Lf, h_k.i = %Lf\n", h_k.r, h_k.i);
-	results[n] = h_k;
+	result[k] = h_k;
     }
 
-    return results;
+    return result;
 }
 
 // Implementation for 3b
@@ -197,6 +225,7 @@ Complex** q_3b(int N)
     fprintf(fp1, "time,h1.r,h1.i");
     fprintf(fp2, "time,h2.r,h2.i");
 
+    // For every sample
     for (i = 0; i < N; ++i) {
 	time = times[i];
 
@@ -226,21 +255,36 @@ Complex** q_3b(int N)
 
 int main()
 {
+    // Set number of samples
     int N = 100;
 
-    Complex** h1_h2 = q_3b(N);
+    // Complete Q3.b, then pass the values --> array of array of Complexes
+    Complex** h1_and_h2 = q_3b(N);
 
+    // Create array containing N evenly spaced time values, 0 -> 2pi
     long double* times = linspace_ld(0, 2 * pi, N);
-    Complex* H1 = DFT_functions(h_1, times, N);
-    Complex* H2 = DFT_functions(h_2, times, N);
 
-    Complex* i_h1 = IFT(H1, 100);
-    Complex* i_h2 = IFT(H2, 100);
+    // Compute Discrete Fourier Transforms of samples generated in Q3.b
+    // DFT_samples performs operation on existing samples,
+    // whereas DFT_functions generates examples based on a function passed to it.
+    Complex* H1 = DFT_samples(h1_and_h2[0], times, N);
+    Complex* H2 = DFT_samples(h1_and_h2[1], times, N);
 
+    // Allocate space for & compute Inverse Fourier Transform (IFT)
+    // using values from H1 & H2
+    Complex* i_h1 = IFT(H1, N);
+    Complex* i_h2 = IFT(H2, N);
+
+    // Removing values at H1[n=1] & H2[n=0]
+    i_h1 = arr_pop_Complex(i_h1, N, 1);
+    i_h2 = arr_pop_Complex(i_h2, N, 0);
+
+    // Complex values to keep next loop readable;
     Complex H1_current;
     Complex H2_current;
 
     int i;
+    // Printing values of DFT
     for (i = 0; i < N; i++) {
 	H1_current = H1[i];
 	H2_current = H2[i];
@@ -248,23 +292,25 @@ int main()
 	printf("t = %Lf\tH1_%d = %Lf + %Lfi\tH2_%d = %Lf + %Lfi\n", times[i], i, H1_current.r, H1_current.i, i, H2_current.r, H2_current.i);
     }
 
-    FILE* fp = fopen("inverse.txt", "w");
-    if (!fp) {
+    FILE* fp1 = fopen("inv_1.txt", "w");
+    FILE* fp2 = fopen("inv_2.txt", "w");
+    if (!fp1 || !fp2) {
 	fprintf(stderr, "failed opening inverse.txt");
 	exit(-1);
     }
 
-    fprintf(fp, "time,h1.r,h1.i\n");
+    fprintf(fp1, "time,h1.r,h1.i\n");
     for (i = 0; i < N; ++i) {
-	fprintf(fp, "%Lf, %Lf, %Lf\n", times[i], i_h1[i].r, i_h1[i].i);
+	fprintf(fp1, "%Lf, %Lf, %Lf\n", times[i], i_h1[i].r, i_h1[i].i);
     }
 
-    fclose(fp);
+    fclose(fp1);
+    fclose(fp2);
 
     free(i_h1);
     free(i_h2);
     free(times);
-    free(h1_h2);
+    free(h1_and_h2);
     free(H1);
     free(H2);
 

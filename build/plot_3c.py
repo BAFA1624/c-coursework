@@ -20,8 +20,6 @@ with open("3_b_2.txt", 'r') as file:
         for key in line.keys():
             h2[key].append(np.float64(line[key]))
 
-print(min(h2['h2.r']), max(h2['h2.r']))
-
 plt.figure(figsize=(10, 10))
 plt.plot(h1['time'], h1['h1.r'], 'r-', linewidth=1.2, label='real component')
 plt.plot(h1['time'], h1['h1.i'], 'b-',
@@ -33,7 +31,7 @@ plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
            **axes_tick_font)
 plt.yticks(**axes_tick_font)
 plt.tick_params(direction='in')
-plt.ylim(-2, 2)
+#plt.ylim(-2, 2)
 plt.xlim(0, 2*np.pi)
 plt.legend()
 plt.show()
