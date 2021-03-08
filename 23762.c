@@ -162,42 +162,56 @@ Complex* DFT_samples(Complex* samples, long double* times, int N)
     return results;
 }
 
+void print_Complex(Complex* z)
+{
+    printf("(%Lf + %Lfi)", z->r, z->i);
+}
+
+// Placeholder function with similar function to 'pass' statement in Python
+void pass() { }
+
 // Calculates IFT of N provided samples.
 // TODO: Understand why it doesn't work
-Complex* IFT(Complex* samples, size_t N)
+Complex* IFT(Complex* samples, size_t N, size_t skip_n)
 {
     Complex* result = (Complex*)malloc(N * sizeof(Complex));
 
     Complex H_n, h_k;
     long double theta;
-    int n, k;
+    size_t n, k;
 
     for (k = 0; k < N; k++) {
 	h_k.r = 0.;
 	h_k.i = 0.;
 
 	for (n = 0; n < N; n++) {
+	    if (n == skip_n) {
+		pass();
+	    } else {
+		// Calculate values
+		theta = 2. * pi * n * k / N;
+		H_n = samples[n];
 
-	    // Calculate values
-	    theta = 2. * pi * n * k / N;
-	    H_n = samples[k];
-
-	    // (a + bi)(c + di) = (ac - bd) + (ad + bc)i
-	    // h_k(t_k).exp(-2.pi.n.k/N):
-	    h_k.r += (H_n.r * cosl(theta) - H_n.i * sinl(theta));
-	    h_k.i += (H_n.r * sinl(theta) + H_n.i * cosl(theta));
+		// (a + bi)(c + di) = (ac - bd) + (ad + bc)i
+		// h_k(t_k).exp(-2.pi.n.k/N):
+		h_k.r += (H_n.r * cosl(theta) - H_n.i * sinl(theta));
+		h_k.i += (H_n.r * sinl(theta) + H_n.i * cosl(theta));
+	    }
 	}
 
 	h_k.r = (long double)h_k.r / N;
 	h_k.i = (long double)h_k.i / N;
 	result[k] = h_k;
+
+	//print_Complex(&result[k]);
+	//putchar('\n');
     }
 
     return result;
 }
 
 // Implementation for 3b
-Complex** q_3b(int N)
+Complex** q_3b(long double* times, size_t N)
 {
     // Allocating memory for arrays to store results in
     Complex* h1_vals = (Complex*)malloc(N * sizeof(Complex));
@@ -216,9 +230,8 @@ Complex** q_3b(int N)
     }
 
     // Declare variables for increment, complex results, and times.
-    int i;
+    size_t i;
     Complex y1, y2;
-    long double* times = linspace_ld(0., 2 * pi, N);
     long double time;
 
     // Print labels to file.
@@ -253,16 +266,28 @@ Complex** q_3b(int N)
     return results;
 }
 
+// Questions 3.d & 3.e:
+// 	- 3.d: Perform DFT on h1(t) & h2(t) --> H1(w) & H2(w)
+// 	       typeof(Hn(w)) = Complex*
+// 	       Calulated using DFT_functions
+// 	- 3.e: Print results to screen
+// Also returns array of {H1(w), H2(w)} for use in part 3.f
+Complex** q_3de(long double* times, size_t N)
+{
+    // Allocating memory for results, H1(w), & H2(w)
+    Complex** results = (Complex**)malloc(2 * sizeof(Complex*));
+    Complex* H1 = (Complex*)malloc(N * sizeof(Complex));
+    Complex* H2 = (Complex*)malloc(N * sizeof(Complex));
+}
+
 int main()
 {
-    // Set number of samples
-    int N = 100;
+    // Set number of samples & generate time values
+    size_t N = 100;
+    long double* times = linspace_ld(0, 2 * pi, 100);
 
     // Complete Q3.b, then pass the values --> array of array of Complexes
-    Complex** h1_and_h2 = q_3b(N);
-
-    // Create array containing N evenly spaced time values, 0 -> 2pi
-    long double* times = linspace_ld(0, 2 * pi, N);
+    Complex** h1_and_h2 = q_3b(times, N);
 
     // Compute Discrete Fourier Transforms of samples generated in Q3.b
     // DFT_samples performs operation on existing samples,
@@ -272,12 +297,8 @@ int main()
 
     // Allocate space for & compute Inverse Fourier Transform (IFT)
     // using values from H1 & H2
-    Complex* i_h1 = IFT(H1, N);
-    Complex* i_h2 = IFT(H2, N);
-
-    // Removing values at H1[n=1] & H2[n=0]
-    i_h1 = arr_pop_Complex(i_h1, N, 1);
-    i_h2 = arr_pop_Complex(i_h2, N, 0);
+    Complex* i_h1 = IFT(H1, N, 1);
+    Complex* i_h2 = IFT(H2, N, 0);
 
     // Complex values to keep next loop readable;
     Complex H1_current;
@@ -289,7 +310,7 @@ int main()
 	H1_current = H1[i];
 	H2_current = H2[i];
 
-	printf("t = %Lf\tH1_%d = %Lf + %Lfi\tH2_%d = %Lf + %Lfi\n", times[i], i, H1_current.r, H1_current.i, i, H2_current.r, H2_current.i);
+	//printf("t = %Lf\tH1_%d = %Lf + %Lfi\tH2_%d = %Lf + %Lfi\n", times[i], i, H1_current.r, H1_current.i, i, H2_current.r, H2_current.i);
     }
 
     FILE* fp1 = fopen("inv_1.txt", "w");
@@ -300,8 +321,10 @@ int main()
     }
 
     fprintf(fp1, "time,h1.r,h1.i\n");
+    fprintf(fp2, "time,h2.r,h2.i\n");
     for (i = 0; i < N; ++i) {
 	fprintf(fp1, "%Lf, %Lf, %Lf\n", times[i], i_h1[i].r, i_h1[i].i);
+	fprintf(fp2, "%Lf, %Lf, %Lf\n", times[i], i_h2[i].r, i_h2[i].i);
     }
 
     fclose(fp1);
