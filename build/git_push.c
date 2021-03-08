@@ -24,10 +24,12 @@ int main(int argc, char* argv[])
 	    goto error;
 	}
 	size_t x = strlcat(push_msg, "git commit -m \"Auto Push: ", sz);
+	printf("\n--\n%s|\n--\n", push_msg);
 	size_t y = strlcat(push_msg, argv[1], sz);
+	printf("\n--\n%s|\n--\n", push_msg);
 	size_t z = strlcat(push_msg, "\"", sz);
 
-	printf("\n--\n%s\n--\n", push_msg);
+	printf("\n--\n%s|\n--\n", push_msg);
 	printf("\nx = %ld, y = %ld, z = %ld\n", x, y, z);
 
 	status = system(push_msg) / 256;
