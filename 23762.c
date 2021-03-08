@@ -279,7 +279,7 @@ Complex** q_3de(long double* times, size_t N)
     Complex* H1 = (Complex*)malloc(N * sizeof(Complex));
     Complex* H2 = (Complex*)malloc(N * sizeof(Complex));
 }
-
+// This is a test change.
 int main()
 {
     // Set number of samples & generate time values
