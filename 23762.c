@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -30,6 +31,16 @@ void print_Complex(Complex* z)
 
 // End of complex number functions
 // ------------------------------------------------------
+// Simple struct for returning data in 3j+
+
+typedef struct Measurement {
+    int* n_arr;
+    long double* times;
+    Complex* z_arr;
+} Measurement;
+
+// End of Measurement struct/functions
+// -------------------------------------------------------
 // General functionality:
 // Functions which facilitate completing the questions
 
@@ -384,6 +395,60 @@ void q_3g(Complex** data, long double* times, size_t N)
     fclose(fp2);
 }
 
+// Read data in from data.txt, return as array of Complexes
+Measurement q_3h(const char* filename, size_t N)
+{
+    FILE* fp = fopen(filename, "r");
+    if (!fp) {
+	error_exit("\nFailed to open data.txt in q_3h.\n");
+    }
+
+    // Allocating vars to keep track of array size and arrays for data
+    size_t sz;
+    long double* times = (long double*)malloc(N * sizeof(long double));
+    if (!times) {
+	error_exit("\nmalloc failed for times in q_3h.\n");
+    }
+    int* n_arr = (int*)malloc(N * sizeof(int));
+    if (!times) {
+	error_exit("\nmalloc failed for n_arr in q_3h.\n");
+    }
+    Complex* z_arr = (Complex*)malloc(N * sizeof(Complex));
+    if (!z_arr) {
+	error_exit("\nmalloc failed for z_arr in q_3h.\n");
+    }
+    long double real = 0.;
+    long double imag = 0.;
+
+    // Use fscanf to read from file
+    while (fscanf(fp, "%d, %e, %e, %e", n_arr[sz], times[sz], real, imag) != EOF && sz < N) {
+	z_arr[sz].r = real;
+	z_arr[sz].i = imag;
+	sz++;
+    }
+
+    // Create result & pack it with data from file read
+    Measurement result;
+    result.n_arr = n_arr;
+    result.times = times;
+    result.z_arr = z_arr;
+
+    return result;
+}
+
+// Apply DFT to h3
+Complex* q_3j(Complex* data, long double* times, size_t N)
+{
+    // Applying DFT to data with DFT_samples
+    Complex* result = DFT_samples(data, times, N);
+    return result;
+}
+
+// Applies IFT to 4 terms of H3 with largest amplitude
+Complex* q_3k(Complex* samples, size_t N)
+{
+}
+
 // End of question answers
 // -----------------------------------------------------
 // main()
@@ -403,6 +468,10 @@ int main()
     Complex** prime_h1_and_h2 = q_3f(H1_and_H2, N);
 
     q_3g(prime_h1_and_h2, times, N);
+
+    Measurement h3 = q_3h("data.txt", 200);
+
+    Complex* H3 = q_3j(h3.z_arr, h3.times, 200);
 
     /*
 
