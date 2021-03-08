@@ -22,6 +22,8 @@ long double c_mod_ptr(Complex* z) { return c_mod(*z); }
 long double c_arg(Complex z) { return atan2l(z.i, z.r); }
 long double c_arg_ptr(Complex* z) { return atan2l(z->i, z->r); }
 
+long double test = 2.3;
+
 // Implementation of h1 & h2
 Complex h_1(long double time)
 {
