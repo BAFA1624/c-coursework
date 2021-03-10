@@ -2,7 +2,82 @@
 #include <stdlib.h>
 #include <string.h>
 
-size_t strlcat(char* dest, const char* src, size_t size);
+#ifndef HAVE_STRLCAT
+/*
+ * '_cups_strlcat()' - Safely concatenate two strings.
+ */
+
+size_t		     /* O - Length of string */
+strlcat(char* dst,   /* O - Destination string */
+    const char* src, /* I - Source string */
+    size_t size)     /* I - Size of destination string buffer */
+{
+    size_t srclen; /* Length of source string */
+    size_t dstlen; /* Length of destination string */
+
+    /*
+  * Figure out how much room is left...
+  */
+
+    dstlen = strlen(dst);
+    size -= dstlen + 1;
+
+    if (!size)
+	return (dstlen); /* No room, return immediately... */
+
+    /*
+  * Figure out how much room is needed...
+  */
+
+    srclen = strlen(src);
+
+    /*
+  * Copy the appropriate amount...
+  */
+
+    if (srclen > size)
+	srclen = size;
+
+    memcpy(dst + dstlen, src, srclen);
+    dst[dstlen + srclen] = '\0';
+
+    return (dstlen + srclen);
+}
+#endif /* !HAVE_STRLCAT */
+
+#ifndef HAVE_STRLCPY
+/*
+ * '_cups_strlcpy()' - Safely copy two strings.
+ */
+
+size_t		     /* O - Length of string */
+strlcpy(char* dst,   /* O - Destination string */
+    const char* src, /* I - Source string */
+    size_t size)     /* I - Size of destination string buffer */
+{
+    size_t srclen; /* Length of source string */
+
+    /*
+  * Figure out how much room is needed...
+  */
+
+    size--;
+
+    srclen = strlen(src);
+
+    /*
+  * Copy the appropriate amount...
+  */
+
+    if (srclen > size)
+	srclen = size;
+
+    memcpy(dst, src, srclen);
+    dst[srclen] = '\0';
+
+    return (srclen);
+}
+#endif /* !HAVE_STRLCPY */
 
 int main(int argc, char* argv[])
 {
@@ -10,7 +85,7 @@ int main(int argc, char* argv[])
     char* my_err_msg = "\nUnknown error\n";
     char* push_msg = "\nDefault msg\n";
     if (argc > 1) {
-	status = system("git add ../23762.c ../CMakeLists.txt ../final-exercise2020-2021.pdf ../README.md ../Plots 3_b_1.txt 3_b_2.txt git_push.c inv_1.txt inv_2.txt plot_3c.py") / 256;
+	status = system("git add ../23762.c ../CMakeLists.txt ../final-exercise2020-2021.pdf ../README.md ../Plots git_push.c h1.txt h2.txt inv_1.txt inv_2.txt inv_3.txt plot_3c.py plot_3h.py") / 256;
 	if (status != 0) {
 	    my_err_msg = "\nCommand \"git add ....\" failed.\n";
 	    goto error;
