@@ -72,7 +72,7 @@ plt.show()
 
 # Plot real part of h2 (has no imaginary part)
 plt.figure(figsize=(10, 10))
-plt.plot(h2['time'], h2['real'], 'r-', linewidth=1.2)
+plt.plot(h2['time'], h2[''], 'r-', linewidth=1.2)
 plt.xlabel('Time / s', **axis_label_font)
 plt.ylabel(r'h$_{2}$(t)')
 plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
