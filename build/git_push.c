@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     char* my_err_msg = "\nUnknown error\n";
     char* push_msg = "\nDefault msg\n";
     if (argc > 1) {
-	status = system("git add ../23762.c ../CMakeLists.txt ../final-exercise2020-2021.pdf ../README.md ../Plots git_push.c h1.txt h2.txt inv_1.txt inv_2.txt inv_3.txt plot_3c.py plot_3h.py") / 256;
+	status = system("git add ../23762.c ../CMakeLists.txt ../final-exercise2020-2021.pdf ../README.md ../Plots git_push.c h1.txt h2.txt inv_1.txt inv_2.txt inv_3.txt plot_3c.py plot_3h.py plot_3m.py") / 256;
 	if (status != 0) {
 	    my_err_msg = "\nCommand \"git add ....\" failed.\n";
 	    goto error;
