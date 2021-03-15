@@ -4,6 +4,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __unix
+#define fopen_s(pFile, filenams, mode) ((*(pFile)) = fopen((filename), (mode))) == NULL
+#endif
+
 long double pi = 3.14159265358979323846;
 long double pi_2 = 1.57079632679489661923;
 long double pi_4 = 0.78539816339744830962;
@@ -26,10 +30,6 @@ typedef struct Complex {
 // Calculate square of modulus for complex numbers.
 long double cMod(const Complex z) { return sqrtl(z.r * z.r + z.i * z.i); }
 long double cModPtr(const Complex* z) { return cMod(*z); }
-
-// Calculate argument of complex number
-long double cArg(const Complex z) { return atan2l(z.i, z.r); }
-long double cArgPtr(const Complex* z) { return atan2l(z->i, z->r); }
 
 void printComplex(const Complex* z)
 {
@@ -78,43 +78,6 @@ Complex h_2(const long double time)
 	.i = 0
     };
     return result;
-}
-
-// Pops position, idx, from array, arr, of size N. Returns original array with realloated memory
-// Warning: Alters original array
-long double* arrPopLd(long double* arr, size_t N, size_t idx)
-{
-    if (idx >= N) {
-	errorExit("\n<arrPopLd> OutOfBoundsError, supplied idx >= N.\n");
-    }
-
-    size_t i;
-    for (i = idx; i < N - 1; ++i) {
-	arr[i] = arr[i + 1];
-    }
-    arr = (long double*)realloc(arr, (N - 1) * sizeof(long double));
-    if (!arr) {
-	errorExit("\n<arrPopLd> Failed realloc.\n");
-    }
-    return arr;
-}
-
-// See msg for arrPopLd, couldn't work out how to do it generically
-Complex* arrPopComplex(Complex* arr, size_t N, size_t idx)
-{
-    if (idx >= N) {
-	errorExit("\n<arrPopComplex> OutOfBoundsError, supplied idx >= N.\n");
-    }
-
-    size_t i;
-    for (i = idx; i < N - 1; ++i) {
-	arr[i] = arr[i + 1];
-    }
-    arr = (Complex*)realloc(arr, (N - 1) * sizeof(Complex));
-    if (!arr) {
-	errorExit("\n<arrPopCopmlex> Failed realloc.\n");
-    }
-    return arr;
 }
 
 // Returns 1 (true) if x is in ls
@@ -340,11 +303,12 @@ int compareMeasurement(const void* a, const void* b)
 }
 
 // Write Complex data to specified file
-void writeComplex(const long double* time_data, const Complex* z_data, size_t N, char* filename)
+void writeComplex(const long double* time_data, const Complex* z_data, const size_t N, const char* filename)
 {
     // Open file, check for failure
-    FILE* fp = fopen(filename, "w");
-    if (!fp) {
+    FILE* fp = NULL;
+    size_t status = fopen_s(&fp, filename, "w");
+    if (!fp || status) {
 	errorExit("\n<writeComplex> Failed to open file.\n");
     }
 
@@ -472,8 +436,9 @@ void q_3g(Complex** data, long double* times, size_t N)
 // Read data in from data.txt, return as array of Complexes
 Measurement* q_3h(const char* filename, size_t N)
 {
-    FILE* fp = fopen(filename, "r");
-    if (!fp) {
+    FILE* fp;
+    size_t status = fopen_s(&fp, filename, "r");
+    if (!fp || status) {
 	errorExit("\n<q_3h> Failed to open data.txt.\n");
     }
 
@@ -591,15 +556,36 @@ void q_3l(const long double* times, const Complex* data, size_t N, char* filenam
     writeComplex(times, data, N, filename);
 }
 
+size_t charToSizet(const char* str)
+{
+    size_t i, result = 0, len = strlen(str);
+    char c;
+
+    printf("\nlen = %ld\n", len);
+
+    for (i = 0; i < len; ++i) {
+	c = str[i];
+	result += (pow(10, len - i - 1)) * ((size_t)c - '0');
+    }
+
+    return result;
+}
+
 // End of question answers
 // -----------------------------------------------------
 // main()
 
-int main()
+int main(int argc, char* argv[])
 {
+    if (argc < 2 || argc > 2) {
+	errorExit("\nToo many or too few arguments, please call program as: ./<program_name> <value of N>\n");
+    }
+
     // Set number of samples & generate time values
-    size_t i, N = 100;
+    size_t i, N = charToSizet(argv[1]);
     long double* times = linspaceLd(0, 2 * pi, N);
+
+    printf("\nvalue of N = %ld.\n", N);
 
     // Complete Q3.b, then pass the values --> array of array of Complexes
     Complex** h1_and_h2 = q_3b(times, N);
@@ -630,6 +616,21 @@ int main()
     }
 
     q_3l(times, i_h3, N, "inv_3.txt");
+
+    // Freeing memory
+    free(times);
+    free(h1_and_h2[0]);
+    free(h1_and_h2[1]);
+    free(h1_and_h2);
+    free(H1_and_H2[0]);
+    free(H1_and_H2[1]);
+    free(H1_and_H2);
+    free(prime_h1_and_h2[0]);
+    free(prime_h1_and_h2[1]);
+    free(prime_h1_and_h2);
+    free(h3);
+    free(H3);
+    free(i_h3);
 
     return 0;
 }

@@ -7,9 +7,9 @@ include_directories("/usr/include/")
 # -D_USEMINGW_ANSI_STDIO=1
 set(DCMAKE_CC_COMPILER=gcc)
 
-set(GCC_COVERAGE_COMPILE_FLAGS "-g -L=/usr/include/ -static -Wall -Wextra -pedantic -O3 -ggdb3 -Werror -Wdouble-promotion -Wformat=2 -Wconversion")
-set(GCC_COVERAGE_LINK_FLAGS "-libm")
+set(GCC_COVERAGE_COMPILE_FLAGS "-pg -g -L=/usr/include/ -static -Wall -Wextra -pedantic -O3 -ggdb3 -Werror -Wdouble-promotion -Wformat=2 -Wconversion")
+set(GCC_COVERAGE_LINK_FLAGS "-libm -pg")
 
-add_executable(coursework 23762.c)
-target_link_libraries(coursework m)
+add_executable(a.out 23762.c)
+target_link_libraries(a.out m)
 

@@ -3,6 +3,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def mod(x, y):
+    result = []
+    for _x, _y in zip(x, y):
+        result.append((_x**2 + _y**2) ** 0.5)
+    return result
+
+
 # Specifying formatting for axis
 axis_label_font = {'fontname': 'serif',
                    'size': 18}
@@ -24,9 +31,16 @@ with open("inv_2.txt", 'r') as file:
         for key in line.keys():
             h2_prime[key].append(np.float64(line[key]))
 
+
 # Find y axis min/max for h1 & h2
 h1_r_min, h1_i_min = min(h1_prime['real']), min(h1_prime['imag'])
 h2_r_min, h2_i_min = min(h2_prime['real']), min(h2_prime['imag'])
+
+h1_min, h1_max = min(mod(h1_prime['real'], h1_prime['imag'])), max(
+    mod(h1_prime['real'], h1_prime['imag']))
+
+h2_min, h2_max = min(mod(h2_prime['real'], h2_prime['imag'])), max(
+    mod(h2_prime['real'], h2_prime['imag']))
 
 h1_r_max, h1_i_max = max(h1_prime['real']), max(h1_prime['imag'])
 h2_r_max, h2_i_max = max(h2_prime['real']), max(h2_prime['imag'])
@@ -56,10 +70,10 @@ else:
 
 # Plot real & imag part of h1
 plt.figure(figsize=(10, 10))
-plt.plot(h1_prime['time'], h1_prime['real'], 'r-',
+plt.plot(h1_prime['time'], mod(h1_prime['real'], h1_prime['imag']), 'r-',
          linewidth=1.2, label='real component')
-plt.plot(h1_prime['time'], h1_prime['imag'], 'b-',
-         linewidth=1.2, label='imaginary component')
+# plt.plot(h1_prime['time'], h1_prime['imag'], 'b-',
+#         linewidth=1.2, label='imaginary component')
 plt.xlabel('Time / s', **axis_label_font)
 plt.ylabel(r'h$_{1}$`(t)', **axis_label_font)
 plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
@@ -68,16 +82,16 @@ plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
 plt.yticks(**axes_tick_font)
 plt.tick_params(direction='in')
 plt.xlim(0, 2*np.pi)
-plt.ylim(p1_ymin, p1_ymax)
+plt.ylim(h1_min, h1_max)
 plt.legend()
 plt.show()
 
 # Plot real & imag part of h1
 plt.figure(figsize=(10, 10))
-plt.plot(h2_prime['time'], h2_prime['real'], 'r-',
+plt.plot(h2_prime['time'], mod(h2_prime['real'], h2_prime['imag']), 'r-',
          linewidth=1.2, label='real component')
-plt.plot(h2_prime['time'], h2_prime['imag'], 'b-',
-         linewidth=1.2, label='imaginary component')
+# plt.plot(h2_prime['time'], h2_prime['imag'], 'b-',
+#         linewidth=1.2, label='imaginary component')
 plt.xlabel('Time / s', **axis_label_font)
 plt.ylabel(r'h$_{1}$`(t)', **axis_label_font)
 plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
@@ -86,6 +100,6 @@ plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
 plt.yticks(**axes_tick_font)
 plt.tick_params(direction='in')
 plt.xlim(0, 2*np.pi)
-plt.ylim(p1_ymin, p1_ymax)
+plt.ylim(h2_min, h2_max)
 plt.legend()
 plt.show()

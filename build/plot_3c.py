@@ -2,6 +2,14 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
+
+def mod(x, y):
+    result = []
+    for _x, _y in zip(x, y):
+        result.append((_x**2 + _y**2) ** 0.5)
+    return result
+
+
 # Specifying formatting for axis
 axis_label_font = {'fontname': 'serif',
                    'size': 18}
@@ -30,6 +38,11 @@ h2_r_min, h2_i_min = min(h2['real']), min(h2['imag'])
 h1_r_max, h1_i_max = max(h1['real']), max(h1['imag'])
 h2_r_max, h2_i_max = max(h2['real']), max(h2['imag'])
 
+h1_min, h1_max = min(mod(h1['real'], h1['imag'])), max(
+    mod(h1['real'], h1['imag']))
+h2_min, m2_max = min(mod(h2['real'], h2['imag'])), max(
+    mod(h2['real'], h2['imag']))
+
 # Set p1/p2_ymin/ymax as respective value
 p1_ymin = 0
 p1_ymax = 0
@@ -55,9 +68,10 @@ else:
 
 # Plot real & imag part of h1
 plt.figure(figsize=(10, 10))
-plt.plot(h1['time'], h1['real'], 'r-', linewidth=1.2, label='real component')
-plt.plot(h1['time'], h1['imag'], 'b-',
-         linewidth=1.2, label='imaginary component')
+plt.plot(h1['time'], mod(h1['real'], h1['imag']),
+         'r-', linewidth=1.2, label='real component')
+# plt.plot(h1['time'], h1['imag'], 'b-',
+#         linewidth=1.2, label='imaginary component')
 plt.xlabel('Time / s', **axis_label_font)
 plt.ylabel(r'h$_{1}$(t)', **axis_label_font)
 plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
@@ -65,14 +79,13 @@ plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
            **axes_tick_font)
 plt.yticks(**axes_tick_font)
 plt.tick_params(direction='in')
-plt.xlim(0, 2*np.pi)
-plt.ylim(p1_ymin, p1_ymax)
+plt.ylim(h1_min - 0.3, h1_max + 0.3)
 plt.legend()
 plt.show()
 
 # Plot real part of h2 (has no imaginary part)
 plt.figure(figsize=(10, 10))
-plt.plot(h2['time'], h2[''], 'r-', linewidth=1.2)
+plt.plot(h2['time'], mod(h2['real'], h2['imag']), 'r-', linewidth=1.2)
 plt.xlabel('Time / s', **axis_label_font)
 plt.ylabel(r'h$_{2}$(t)')
 plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
