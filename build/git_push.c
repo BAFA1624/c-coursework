@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
 	    goto error;
 	}
 
-	status = system("git push") / 256;
+	status = system("git push -f") / 256;
 	if (status != 0) {
 	    my_err_msg = "Command \"git push\" failed.\n";
 	    goto error;
