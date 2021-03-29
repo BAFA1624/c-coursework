@@ -4,14 +4,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef __unix
-#define fopen_s(pFile, filenams, mode) ((*(pFile)) = fopen((filename), (mode))) == NULL
-#endif
-
 double pi = 3.14159265358979323846;
 double pi_2 = 1.57079632679489661923;
 double pi_4 = 0.78539816339744830962;
 double e = 2.7182818284590452354;
+
+#ifdef _WIN32
+// If compiling on Windows turn off warnings about fopen & fscanf
+// Should be noted this is like swatting a fly with a nuke
+// as it turns off a lot of Windows specific warnings
+#define _CRT_SECURE_NO_DEPRECATE
+#endif
 
 // -----------------------------------------------------
 // Implementing some simple complex number functionality
@@ -88,7 +91,7 @@ int checkIdx(const size_t* ls, const size_t sz, const size_t x)
 }
 
 // Produces range of N long doubles from start -> end exclusive. Simple version of numpy.linspace
-double* linspaced(const double start, const double end, const size_t N)
+double* linspaceD(const double start, const double end, const size_t N)
 {
     // Allocate memory for result, calculate increment size for N values in given range
     double* arr = (double*)malloc(N * sizeof(double));
@@ -111,30 +114,27 @@ double* linspaced(const double start, const double end, const size_t N)
     return arr;
 }
 
-// Produces range of N complex values for given function func for provided times
-Complex* linspaceComplex(Complex (*func)(double), const double* times, const size_t N)
+// Same as linspaceD, except values are generated using provided function, func.
+Complex* linspaceComplex(Complex (*f)(double), const double* times, const size_t N)
 {
-    // Allocate memory for result, error if fails
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
     if (!arr) {
 	errorExit("\n<linespaceComplex> malloc failed.\n");
     }
-
-    // Generate a value in arr for every provided value in times
     size_t i;
     for (i = 0; i < N; ++i) {
-	arr[i] = func(times[i]);
+	arr[i] = f(times[i]);
     }
     return arr;
 }
 
 // Discrete Fourier Transform taking array of samples
-Complex* DFTSamples(const Complex* samples, const size_t N)
+Complex* DFT(const Complex* samples, const size_t N)
 {
     // Alloc memory for resulting array & declare vars
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
     if (!arr) {
-	errorExit("\n<DFTSamples> malloc failed.\n");
+	errorExit("\n<DFT> malloc failed.\n");
     }
 
     // H_n & h_k keep track of which values are currently in use
@@ -156,30 +156,12 @@ Complex* DFTSamples(const Complex* samples, const size_t N)
 
 	    // (a + bi)(c + di) = (ac - bd) + (ad + bc)i
 	    // h_k(t_k).exp(-2.pi.n.k/N):
-	    H_n.r += (h_k.r * cosl(theta) + h_k.i * sinl(theta));
-	    H_n.i += (h_k.i * cosl(theta) - h_k.r * sinl(theta));
+	    H_n.r += (h_k.r * cos(theta) + h_k.i * sin(theta));
+	    H_n.i += (h_k.i * cos(theta) - h_k.r * sin(theta));
 	}
 
 	arr[n] = H_n;
     }
-
-    return arr;
-}
-
-// Discrete Fourier Transform taking sample function
-Complex* DFTFunction(Complex (*func)(double), const double* times, const int N)
-{
-    // Takes:
-    // 	- func: Ptr to function to perform DFT on.
-    // 	- times: Long double array of sample times.
-    // 	- N: Size of times, incidentally also number of samples.
-    // Does:
-    //  - Generates values for func using time values provided in times.
-    //  - Passes generated values --> DFT_samples.
-    //  - Returns result
-
-    Complex* samples = linspaceComplex(func, times, N);
-    Complex* arr = DFTSamples(samples, N);
 
     return arr;
 }
@@ -193,7 +175,7 @@ void pass() { }
 // N --> Number of elements in samples.
 // skip_n --> Array of indexes to skip or include, depending on what skip is set to
 // sz --> Number of elements in skip_n
-Complex* IFT(Complex* samples, size_t N, size_t* skip_n, size_t sz)
+Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 {
     // Alloc memory for resulting array & declare vars
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
@@ -217,14 +199,14 @@ Complex* IFT(Complex* samples, size_t N, size_t* skip_n, size_t sz)
 	    if (checkIdx(skip_n, sz, n)) {
 		pass();
 	    } else {
-		// Calculate exponent of H_n(W_n).exp(-2.pi.n.k/N)
+		// Calculate exponent of:  H_n(W_n) * exp(-2.pi.n.k/N)
 		theta = 2. * pi * n * k / N;
 		H_n = samples[n];
 
 		// (a + bi)(c + di) = (ac - bd) + (ad + bc)i
 		// h_k(t_k).exp(-2.pi.n.k/N):
-		h_k.r += (H_n.r * cosl(theta) - H_n.i * sinl(theta));
-		h_k.i += (H_n.r * sinl(theta) + H_n.i * cosl(theta));
+		h_k.r += (H_n.r * cos(theta) - H_n.i * sin(theta));
+		h_k.i += (H_n.r * sin(theta) + H_n.i * cos(theta));
 	    }
 	}
 
@@ -237,14 +219,7 @@ Complex* IFT(Complex* samples, size_t N, size_t* skip_n, size_t sz)
     return arr;
 }
 
-// Compare function for sorting values in 3.k using qsort from stdlib.h
 // Compares the amplitudes of two Complex numbers
-// Takes const (void*) cast ptrs to two Complex numbers
-// qsort(void* base, size_t nitems, size_t size, int (*compar)(const vooid*, const void*))
-// int return tells qsort which value is >, ==, or < the other
-// result > 0 --> a > b
-// result < 0 --> b > a
-// result = 0 --> a = b
 int compareComplex(const void* a, const void* b)
 {
     // Calculate amplitude of Complex vars
@@ -256,13 +231,13 @@ int compareComplex(const void* a, const void* b)
     if (isnan(mod_fa) || isnan(mod_fb)) {
 	errorExit("\n<compareComplex> nan values provided.\n");
     } else if (mod_fa > mod_fb) {
+	// a > b --> 1
 	return 1;
     } else if (mod_fa < mod_fb) {
+	// a < b --> -1
 	return -1;
-    } else {
-	return 0;
     }
-
+    // Must be equal... Return 0
     return 0;
 }
 
@@ -282,9 +257,8 @@ int compareMeasurement(const void* a, const void* b)
 void writeComplex(const double* time_data, const Complex* z_data, const size_t N, const char* filename)
 {
     // Open file, check for failure
-    FILE* fp = NULL;
-    size_t status = fopen_s(&fp, filename, "w");
-    if (!fp || status) {
+    FILE* fp = fopen(filename, "w");
+    if (!fp) {
 	errorExit("\n<writeComplex> Failed to open file.\n");
     }
 
@@ -339,7 +313,7 @@ Complex** q_3b(double* times, size_t N)
 // 	       Calulated using DFT_functions
 // 	- 3.e: Print results to screen
 // Also returns array of {H1(w), H2(w)} for use in part 3.f
-Complex** q_3de(double* times, size_t N)
+Complex** q_3de(const double* times, Complex** samples, const size_t N)
 {
     size_t i;
     // Allocating memory for results; will store {H1, H2}
@@ -349,8 +323,8 @@ Complex** q_3de(double* times, size_t N)
     }
 
     // Calculating H1 & H2 using DFT_function
-    Complex* H1 = DFTFunction(h_1, times, N);
-    Complex* H2 = DFTFunction(h_2, times, N);
+    Complex* H1 = DFT(samples[0], N);
+    Complex* H2 = DFT(samples[1], N);
 
     // Add H1 & H2 --> results
     results[0] = H1;
@@ -412,9 +386,8 @@ void q_3g(Complex** data, double* times, size_t N)
 // Read data in from data.txt, return as array of Complexes
 Measurement* q_3h(const char* filename, size_t N)
 {
-    FILE* fp;
-    size_t status = fopen_s(&fp, filename, "r");
-    if (!fp || status) {
+    FILE* fp = fopen(filename, "r");
+    if (!fp) {
 	errorExit("\n<q_3h> Failed to open data.txt.\n");
     }
 
@@ -465,7 +438,7 @@ Measurement* q_3j(const Measurement* data, const size_t N)
     }
 
     // Applying DFT to data with DFT_samples
-    Complex* DFT_data = DFTSamples(z_arr, N);
+    Complex* DFT_data = DFT(z_arr, N);
 
     Measurement* results = (Measurement*)malloc(N * sizeof(Measurement));
     if (!results) {
@@ -541,7 +514,7 @@ int main(int argc, char* argv[])
 {
     // Set number of samples & generate time values
     size_t i, N = 100;
-    double* times = linspaced(0, 2 * pi, N);
+    double* times = linspaceD(0, 2 * pi, N);
 
     printf("\nvalue of N = %ld.\n", N);
 
@@ -549,7 +522,7 @@ int main(int argc, char* argv[])
     Complex** h1_and_h2 = q_3b(times, N);
 
     // Complete Q3.d & Q3.e, then pass the values --> array of array of Complexes
-    Complex** H1_and_H2 = q_3de(times, N);
+    Complex** H1_and_H2 = q_3de(times, h1_and_h2, N);
 
     Complex** prime_h1_and_h2 = q_3f(H1_and_H2, N);
 
@@ -574,6 +547,37 @@ int main(int argc, char* argv[])
     }
 
     q_3l(times, i_h3, N, "inv_3.txt");
+
+    N = 128;
+    size_t n = 100;
+
+    Complex* h1 = h1_and_h2[0];
+    Complex* test = (Complex*)malloc(N * sizeof(Complex));
+
+    for (i = 0; i < N; ++i) {
+	if (i < n)
+	    test[i] = h1[i];
+	else {
+	    Complex a;
+	    a.r = 0.;
+	    a.i = 0.;
+	    printComplex(&a);
+	    test[i] = a;
+	}
+    }
+
+    Complex* H1 = DFT(test, N);
+
+    for (i = 0; i < N; ++i) {
+	printf("%ld: ", i);
+	printComplex(&h1[i]);
+	putchar('\t');
+	printComplex(&H1[i]);
+	putchar('\n');
+    }
+
+    free(test);
+    free(H1);
 
     // Freeing memory
     free(times);
