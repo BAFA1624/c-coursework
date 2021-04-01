@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
 	    my_err_msg = "\nCommand \"git add ...\" failed.\n";
 	    goto error;
 	} else {
-	    printf("\n\"git add\" complete.\n");
+	    printf("\"git add\" complete.\n");
 	}
 
 	size_t sz = strlen(argv[1]) + 29;
@@ -109,14 +109,17 @@ int main(int argc, char* argv[])
 	if (status != 0) {
 	    my_err_msg = "\nCommand \"git commit ...\" failed.\n";
 	    goto error;
+	} else {
+	    printf("\"git commit\" complete.");
 	}
 
 	status = system("git push -f") / 256;
 	if (status != 0) {
 	    my_err_msg = "Command \"git push\" failed.\n";
 	    goto error;
+	} else {
+	    printf("\"git push -f\" complete.");
 	}
-
     } else {
 	my_err_msg = "\nError likely due too missing cmd line args.\n";
 	goto error;
@@ -126,10 +129,11 @@ int main(int argc, char* argv[])
 
 error:
     fprintf(stderr, "\nAn error occurred.\nEnsure that command is of the form './git_push \"<your message here>\"'.\nErrorMsg: %s", my_err_msg);
-    exit(-1);
+    return -1;
 
 cleanup:
     printf("\nGit push successful! Cleaning up...\n");
     free(push_msg);
     printf("\nFinished!\n");
+    return 0;
 }
