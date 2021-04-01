@@ -89,6 +89,8 @@ int main(int argc, char* argv[])
 	if (status != 0) {
 	    my_err_msg = "\nCommand \"git add ...\" failed.\n";
 	    goto error;
+	} else {
+	    printf("\n\"git add\" complete.\n");
 	}
 
 	size_t sz = strlen(argv[1]) + 29;
