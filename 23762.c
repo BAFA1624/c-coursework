@@ -138,20 +138,25 @@ Complex* DFT(const Complex* samples, const size_t N)
     }
 
     // H_n & h_k keep track of which values are currently in use
-    // theta stores value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
+    // theta & theta_k store value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
     Complex H_n, h_k;
-    double theta;
+    double theta, theta_k;
     size_t n, k;
 
     // For every values H_n, sum contributions of all h_k then add to resulting array
     for (n = 0; n < N; n++) {
+	// Precalculate -2 * pi * n / N to prevent repetition in nested for loop
+	theta = -2. * pi * n / N;
+	    
 	// initialize H_n
 	H_n.r = 0.;
 	H_n.i = 0.;
 
 	for (k = 0; k < N; k++) {
-	    // Calculate exponent of h_k(t_k).exp(-2.pi.n.k/N)
-	    theta = 2. * pi * n * k / N;
+	    // Adjust value of theta for current sample
+	    theta_k = theta * k;
+		
+	    // Retrieve k'th sample
 	    h_k = samples[k];
 
 	    // (a + bi)(c + di) = (ac - bd) + (ad + bc)i
@@ -184,13 +189,16 @@ Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
     }
 
     // H_n & h_k keep track of which values are currently in use
-    // theta stores value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
+    // theta & theta_k store value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
     Complex H_n, h_k;
-    double theta;
+    double theta, theta_k;
     size_t n, k;
 
     // For every values H_n, sum contributions of all h_k then add to resulting array
     for (k = 0; k < N; k++) {
+	// Precalculate 2 * pi * n / N to prevent repetition in nested for loop
+	theta = 2. * pi * n / N;
+	    
 	// initialize h_k
 	h_k.r = 0.;
 	h_k.i = 0.;
@@ -199,8 +207,10 @@ Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 	    if (checkIdx(skip_n, sz, n)) {
 		pass();
 	    } else {
-		// Calculate exponent of:  H_n(W_n) * exp(-2.pi.n.k/N)
-		theta = 2. * pi * n * k / N;
+		// Adjust value of theta for current sample
+		theta_k = theta * k;
+		    
+		// Retrieve k'th sample
 		H_n = samples[n];
 
 		// (a + bi)(c + di) = (ac - bd) + (ad + bc)i
