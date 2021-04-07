@@ -161,8 +161,8 @@ Complex* DFT(const Complex* samples, const size_t N)
 
 	    // (a + bi)(c + di) = (ac - bd) + (ad + bc)i
 	    // h_k(t_k).exp(-2.pi.n.k/N):
-	    H_n.r += (h_k.r * cos(theta) + h_k.i * sin(theta));
-	    H_n.i += (h_k.i * cos(theta) - h_k.r * sin(theta));
+	    H_n.r += (h_k.r * cos(theta_k) - h_k.i * sin(theta_k));
+	    H_n.i += (h_k.i * cos(theta_k) + h_k.r * sin(theta_k));
 	}
 
 	arr[n] = H_n;
