@@ -185,44 +185,50 @@ Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
     // Alloc memory for resulting array & declare vars
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
     if (!arr) {
-	errorExit("\n<IFT> malloc failed.\n");
+        errorExit("\n<IFT> malloc failed.\n");
     }
 
     // H_n & h_k keep track of which values are currently in use
-    // theta stores value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
+    // theta & theta_k store value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
     Complex H_n, h_k;
-    double theta;
+    double theta, theta_k;
     size_t n, k;
 
     // For every values H_n, sum contributions of all h_k then add to resulting array
     for (k = 0; k < N; k++) {
-	// initialize h_k
-	h_k.r = 0.;
-	h_k.i = 0.;
+        // Precalculate 2 * pi * n / N to prevent repetition in nested for loop
+        theta = 2. * pi * n / N;
 
-	for (n = 0; n < N; n++) {
-	    if (checkIdx(skip_n, sz, n)) {
-		pass();
-	    } else {
-		// Calculate exponent of:  H_n(W_n) * exp(-2.pi.n.k/N)
-		theta = 2. * pi * n * k / N;
-		H_n = samples[n];
+        // initialize h_k
+        h_k.r = 0.;
+        h_k.i = 0.;
 
-		// (a + bi)(c + di) = (ac - bd) + (ad + bc)i
-		// h_k(t_k).exp(-2.pi.n.k/N):
-		h_k.r += (H_n.r * cos(theta) - H_n.i * sin(theta));
-		h_k.i += (H_n.r * sin(theta) + H_n.i * cos(theta));
-	    }
-	}
+        for (n = 0; n < N; n++) {
+            if (checkIdx(skip_n, sz, n)) {
+                pass();
+            } else {
+                // Adjust value of theta for current sample
+                theta_k = theta * k;
 
-	h_k.r = (double)h_k.r / N;
-	h_k.i = (double)h_k.i / N;
+                // Retrieve k'th sample
+                H_n = samples[n];
 
-	arr[k] = h_k;
+                // (a + bi)(c + di) = (ac - bd) + (ad + bc)i
+                // h_k(t_k).exp(-2.pi.n.k/N):
+                h_k.r += (H_n.r * cos(theta) - H_n.i * sin(theta));
+                h_k.i += (H_n.r * sin(theta) + H_n.i * cos(theta));
+            }
+        }
+
+        h_k.r = (double)h_k.r / N;
+        h_k.i = (double)h_k.i / N;
+
+        arr[k] = h_k;
     }
 
     return arr;
 }
+
 
 // Compares the amplitudes of two Complex numbers
 int compareComplex(const void* a, const void* b)
