@@ -92,7 +92,7 @@ plt.show()
 # plt.legend()
 # plt.show()
 
-plt.plot(h3['time'], h3['real'], 'b-', linewidth=1.2, label='Original Real')
-plt.plot(i_h3['time'], i_h3['real'], 'r-',
-         linewidth=1.2, label='Transformed Real')
-plt.show()
+# plt.plot(h3['time'], h3['real'], 'b-', linewidth=1.2, label='Original Real')
+# plt.plot(i_h3['time'], i_h3['real'], 'r-',
+#          linewidth = 1.2, label = 'Transformed Real')
+# plt.show()

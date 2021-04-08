@@ -147,7 +147,7 @@ Complex* DFT(const Complex* samples, const size_t N)
     for (n = 0; n < N; n++) {
 	// Precalculate -2 * pi * n / N to prevent repetition in nested for loop
 	theta = -2. * pi * n / N;
-	    
+
 	// initialize H_n
 	H_n.r = 0.;
 	H_n.i = 0.;
@@ -155,7 +155,7 @@ Complex* DFT(const Complex* samples, const size_t N)
 	for (k = 0; k < N; k++) {
 	    // Adjust value of theta for current sample
 	    theta_k = theta * k;
-		
+
 	    // Retrieve k'th sample
 	    h_k = samples[k];
 
@@ -197,8 +197,8 @@ Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
     // For every values H_n, sum contributions of all h_k then add to resulting array
     for (k = 0; k < N; k++) {
 	// Precalculate 2 * pi * n / N to prevent repetition in nested for loop
-	theta = 2. * pi * n / N;
-	    
+	theta = 2. * pi * k / N;
+
 	// initialize h_k
 	h_k.r = 0.;
 	h_k.i = 0.;
@@ -208,15 +208,15 @@ Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 		pass();
 	    } else {
 		// Adjust value of theta for current sample
-		theta_k = theta * k;
-		    
+		theta_k = theta * n;
+
 		// Retrieve k'th sample
 		H_n = samples[n];
 
 		// (a + bi)(c + di) = (ac - bd) + (ad + bc)i
 		// h_k(t_k).exp(-2.pi.n.k/N):
-		h_k.r += (H_n.r * cos(theta) - H_n.i * sin(theta));
-		h_k.i += (H_n.r * sin(theta) + H_n.i * cos(theta));
+		h_k.r += (H_n.r * cos(theta_k) - H_n.i * sin(theta_k));
+		h_k.i += (H_n.r * sin(theta_k) + H_n.i * cos(theta_k));
 	    }
 	}
 
