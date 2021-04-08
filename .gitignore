@@ -1,3 +1,14 @@
+build/.cache/
+build/.cmake/
+build/CMakeFiles/
+CMakeCache.txt
+prof*
+*.cmake
+*.json
+data.txt
+build/data.txt
+*.plist
+
 # Prerequisites
 *.d
 
