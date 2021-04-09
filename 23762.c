@@ -258,7 +258,7 @@ Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
     }
 
     // Sorting skip_n to allow checkIdx to be more efficient
-    // qsort((void*)skip_n, sz, sizeof(size_t), compareSize_t);
+    qsort((void*)skip_n, sz, sizeof(size_t), compareSize_t);
 
     // H_n & h_k keep track of which values are currently in use
     // theta & theta_k store value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
@@ -535,25 +535,30 @@ Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
     qsort(samples_sorted, N, sizeof(Measurement), compareMeasurement);
 
     // Variables required for
-    size_t i, n, *skip_n;
+    size_t i, n;
+    size_t* skip_n;
 
     n = N - n_largest_vals;
     if (n <= 0) {
 	errorExit("\n<q_3k> Performing IFT on n <= 0 values.");
     }
 
+    printf("n * sizeof(size_t) = %ld * %ld = %ld\n", n, sizeof(size_t), n * sizeof(size_t));
     skip_n = (size_t*)malloc(n * sizeof(size_t));
     if (!skip_n) {
 	errorExit("\n<q_3k> malloc failed.\n");
     }
 
-    for (i = 0; i < N; ++i) {
+    for (i = 0; i < n; ++i) {
 	skip_n[i] = samples_sorted[i].n;
+	printf("skip_n[%ld] = %ld\n", i, skip_n[i]);
     }
 
     printf("\t6\n");
     // Create array of Complex vals from original samples set
+    printf("\nN * sizeof(Complex) = %ld * %ld = %ld", N, sizeof(Complex), N * sizeof(Complex));
     Complex* z_arr = (Complex*)malloc(N * sizeof(Complex));
+    printf("\t7\n");
     if (!z_arr) {
 	errorExit("\n<q_3k> malloc failed.\n");
     }
@@ -630,34 +635,6 @@ int main(int argc, char* argv[])
     q_3l(times, i_h3, N, "inv_3.txt");
 
     printf("8\n");
-
-    /*N = 128;
-    size_t n = 100;
-
-    Complex* h1 = h1_and_h2[0];
-    Complex* test = (Complex*)malloc(N * sizeof(Complex));
-
-    for (i = 0; i < N; ++i) {
-	if (i < n)
-	    test[i] = h1[i];
-	else {
-	    Complex a;
-	    a.r = 0.;
-	    a.i = 0.;
-	    printComplex(&a);
-	    test[i] = a;
-	}
-    }
-
-    Complex* H1 = DFT(test, N);
-
-    for (i = 0; i < N; ++i) {
-	printf("%ld: ", i);
-	printComplex(&h1[i]);
-	putchar('\t');
-	printComplex(&H1[i]);
-	putchar('\n');
-    }*/
 
     // Freeing memory
     free(times);
