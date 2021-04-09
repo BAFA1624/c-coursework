@@ -1,12 +1,9 @@
 #include <math.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 double pi = 3.14159265358979323846;
-double pi_2 = 1.57079632679489661923;
-double pi_4 = 0.78539816339744830962;
 double e = 2.7182818284590452354;
 
 #ifdef _WIN32
@@ -55,6 +52,46 @@ void errorExit(const char* err_msg)
     exit(-1);
 }
 
+// Compares two size_t
+int compareSize_t(const void* a, const void* b)
+{
+    return (*(size_t*)a - *(size_t*)b);
+}
+
+// Compares the amplitudes of two Complex numbers
+int compareComplex(const void* a, const void* b)
+{
+    // Calculate amplitude of Complex vars
+    const double mod_fa = cModPtr((const Complex*)a);
+    const double mod_fb = cModPtr((const Complex*)b);
+
+    // Comparison of two Complex numbers
+    // If nan values detected --> error out; else --> return appropriate value for comparison
+    if (isnan(mod_fa) || isnan(mod_fb)) {
+	errorExit("\n<compareComplex> nan values provided.\n");
+    } else if (mod_fa > mod_fb) {
+	// a > b --> 1
+	return 1;
+    } else if (mod_fa < mod_fb) {
+	// a < b --> -1
+	return -1;
+    }
+    // Must be equal... Return 0
+    return 0;
+}
+
+// Custom comparison function for qsort with measurements
+int compareMeasurement(const void* a, const void* b)
+{
+    // a & b converted back to Measurement
+    const Measurement* a2 = (Measurement*)a;
+    const Measurement* b2 = (Measurement*)b;
+
+    // Return result of comparison between the amplitudes of
+    // the complex numbers stored in a2 & b2.
+    return compareComplex((void*)&a2->z, (void*)&b2->z);
+}
+
 // Implementation of h1 & h2
 Complex h_1(const double time)
 {
@@ -71,7 +108,7 @@ Complex h_2(const double time)
     double theta = (time - pi) * (time - pi) / 2;
     // Initialize Complex number with result.
     Complex result = {
-	.r = pow(e, theta),
+	.r = exp(theta),
 	.i = 0
     };
     return result;
@@ -79,11 +116,42 @@ Complex h_2(const double time)
 
 // Returns 1 (true) if x is in ls
 // else returns 0
+// Assumes ls is a sorted list
 int checkIdx(const size_t* ls, const size_t sz, const size_t x)
 {
     size_t i;
     for (i = 0; i < sz; ++i) {
-	if (ls[i] == x) {
+	if (ls[i] >= x) {
+	    // if ls[i]==x, x is in the list
+	    if (ls[i] == x) {
+		return 1;
+	    } else {
+		// if ls[i] > x, it isn't in the list
+		return 0;
+	    }
+	}
+    }
+}
+
+int checkIdx_binarysearch(const size_t* ls, const size_t sz, const size_t x)
+{
+    size_t current_idx, left_idx = 0, right_idx = sz - 1;
+
+    // Quick fix to prevent segfault caused when sz = 1 (sz = number of elements in ls)
+    if (sz == 1) {
+	if (ls[0] == x)
+	    return 1;
+	else
+	    return 0;
+    }
+
+    while (left_idx <= right_idx) {
+	current_idx = floor((left_idx + right_idx) / 2);
+	if (ls[current_idx] < x) {
+	    left_idx = current_idx + 1;
+	} else if (ls[current_idx] > x) {
+	    right_idx = current_idx - 1;
+	} else {
 	    return 1;
 	}
     }
@@ -182,11 +250,15 @@ void pass() { }
 // sz --> Number of elements in skip_n
 Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 {
-    // Alloc memory for resulting array & declare vars
+    printf("\n\n\n-------\n%ld\n-------\n\n\n", sz);
+    // Alloc memory for resulting array
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
     if (!arr) {
 	errorExit("\n<IFT> malloc failed.\n");
     }
+
+    // Sorting skip_n to allow checkIdx to be more efficient
+    // qsort((void*)skip_n, sz, sizeof(size_t), compareSize_t);
 
     // H_n & h_k keep track of which values are currently in use
     // theta & theta_k store value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
@@ -204,7 +276,7 @@ Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 	h_k.i = 0.;
 
 	for (n = 0; n < N; n++) {
-	    if (checkIdx(skip_n, sz, n)) {
+	    if (checkIdx_binarysearch(skip_n, sz, n)) {
 		pass();
 	    } else {
 		// Adjust value of theta for current sample
@@ -227,40 +299,6 @@ Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
     }
 
     return arr;
-}
-
-// Compares the amplitudes of two Complex numbers
-int compareComplex(const void* a, const void* b)
-{
-    // Calculate amplitude of Complex vars
-    const double mod_fa = cModPtr((const Complex*)a);
-    const double mod_fb = cModPtr((const Complex*)b);
-
-    // Comparison of two Complex numbers
-    // If nan values detected --> error out; else --> return appropriate value for comparison
-    if (isnan(mod_fa) || isnan(mod_fb)) {
-	errorExit("\n<compareComplex> nan values provided.\n");
-    } else if (mod_fa > mod_fb) {
-	// a > b --> 1
-	return 1;
-    } else if (mod_fa < mod_fb) {
-	// a < b --> -1
-	return -1;
-    }
-    // Must be equal... Return 0
-    return 0;
-}
-
-// Custom comparison function for qsort with measurements
-int compareMeasurement(const void* a, const void* b)
-{
-    // a & b converted back to Measurement
-    const Measurement* a2 = (Measurement*)a;
-    const Measurement* b2 = (Measurement*)b;
-
-    // Return result of comparison between the amplitudes of
-    // the complex numbers stored in a2 & b2.
-    return compareComplex((void*)&a2->z, (void*)&b2->z);
 }
 
 // Write Complex data to specified file
@@ -361,28 +399,34 @@ Complex** q_3de(const double* times, Complex** samples, const size_t N)
 // In this case samples will provided by result of q_3de.
 Complex** q_3f(Complex** samples, size_t N)
 {
+    printf("\t1\n");
     // Unpack H1 & H2 from samples.
     Complex* H1 = samples[0];
     Complex* H2 = samples[1];
 
+    printf("\t2\n");
     // Arrays containing the indexes to skip in H1 & H2
     size_t h1_prime_skip[1] = { 1 };
     size_t h2_prime_skip[1] = { 0 };
 
+    printf("\t3\n");
     // Calculate Inverse Fourier Transform of H1 & H2 respectively.
     Complex* h1_prime = IFT(H1, N, h1_prime_skip, 1);
     Complex* h2_prime = IFT(H2, N, h2_prime_skip, 1);
 
+    printf("\t4\n");
     // Allocate memory for results, check for fail.
     Complex** results = (Complex**)malloc(2 * sizeof(Complex*));
     if (!results) {
 	errorExit("\n<q_3f> malloc failed.\n");
     }
 
+    printf("\t5\n");
     // Pack h1_prime & h2_prime into results so it can be returned for q_3f
     results[0] = h1_prime;
     results[1] = h2_prime;
 
+    printf("\t5\n");
     return results;
 }
 
@@ -393,12 +437,12 @@ void q_3g(Complex** data, double* times, size_t N)
     writeComplex(times, data[1], N, "inv_2.txt");
 }
 
-// Read data in from data.txt, return as array of Complexes
-Measurement* q_3h(const char* filename, size_t N)
+// Read data in from h3.txt, return as array of Complexes
+Measurement* q_3i(const char* filename, size_t N)
 {
     FILE* fp = fopen(filename, "r");
     if (!fp) {
-	errorExit("\n<q_3h> Failed to open data.txt.\n");
+	errorExit("\n<q_3h> Failed to open h3.txt.\n");
     }
 
     // Allocating vars to keep track of array size and arrays for data
@@ -470,7 +514,7 @@ Measurement* q_3j(const Measurement* data, const size_t N)
 }
 
 // Applies IFT to 4 terms of H3 with largest amplitude
-Complex* q_3k(Measurement* samples, const size_t N)
+Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
 {
     // Allocating memory for transformed version of data
     Complex* result = (Complex*)malloc(N * sizeof(Complex));
@@ -490,13 +534,24 @@ Complex* q_3k(Measurement* samples, const size_t N)
     // Sorting samples_sorted based on magnitude of Complex numbers stored within
     qsort(samples_sorted, N, sizeof(Measurement), compareMeasurement);
 
-    // Add all except top 4 values of samples_sorted to list of idx to skip
-    size_t i, skip_n[196];
+    // Variables required for
+    size_t i, n, *skip_n;
 
-    for (i = 0; i < N - 4; ++i) {
+    n = N - n_largest_vals;
+    if (n <= 0) {
+	errorExit("\n<q_3k> Performing IFT on n <= 0 values.");
+    }
+
+    skip_n = (size_t*)malloc(n * sizeof(size_t));
+    if (!skip_n) {
+	errorExit("\n<q_3k> malloc failed.\n");
+    }
+
+    for (i = 0; i < N; ++i) {
 	skip_n[i] = samples_sorted[i].n;
     }
 
+    printf("\t6\n");
     // Create array of Complex vals from original samples set
     Complex* z_arr = (Complex*)malloc(N * sizeof(Complex));
     if (!z_arr) {
@@ -506,8 +561,10 @@ Complex* q_3k(Measurement* samples, const size_t N)
 	z_arr[i] = samples[i].z;
     }
 
+    printf("\t7\n");
     result = IFT(z_arr, N, skip_n, 196);
 
+    printf("\t8\n");
     return result;
 }
 
@@ -534,18 +591,30 @@ int main(int argc, char* argv[])
     // Complete Q3.d & Q3.e, then pass the values --> array of array of Complexes
     Complex** H1_and_H2 = q_3de(times, h1_and_h2, N);
 
+    printf("1\n");
+
     Complex** prime_h1_and_h2 = q_3f(H1_and_H2, N);
 
+    printf("2\n");
+
     q_3g(prime_h1_and_h2, times, N);
+
+    printf("3\n");
 
     // Data provided uses N=200
     N = 200;
 
-    Measurement* h3 = q_3h("data.txt", N);
+    Measurement* h3 = q_3i("h3.txt", N);
+
+    printf("4\n");
 
     Measurement* H3 = q_3j(h3, N);
 
-    Complex* i_h3 = q_3k(H3, N);
+    printf("5\n");
+
+    Complex* i_h3 = q_3k(H3, N, 4);
+
+    printf("6\n");
 
     times = (double*)realloc(times, N * sizeof(double));
     if (!times) {
@@ -556,9 +625,13 @@ int main(int argc, char* argv[])
 	times[i] = h3[i].time;
     }
 
+    printf("7\n");
+
     q_3l(times, i_h3, N, "inv_3.txt");
 
-    N = 128;
+    printf("8\n");
+
+    /*N = 128;
     size_t n = 100;
 
     Complex* h1 = h1_and_h2[0];
@@ -584,10 +657,7 @@ int main(int argc, char* argv[])
 	putchar('\t');
 	printComplex(&H1[i]);
 	putchar('\n');
-    }
-
-    free(test);
-    free(H1);
+    }*/
 
     // Freeing memory
     free(times);

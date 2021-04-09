@@ -5,8 +5,8 @@ CMakeCache.txt
 prof*
 *.cmake
 *.json
-data.txt
-build/data.txt
+h3.txt
+build/h3.txt
 *.plist
 
 # Prerequisites

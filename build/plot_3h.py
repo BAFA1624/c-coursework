@@ -79,7 +79,7 @@ plt.plot(h1_prime['time'], h1_prime['imag'], 'b-',
 plt.xlabel('Time / s', **axis_label_font)
 plt.ylabel(r'h$_{1}$`(t)', **axis_label_font)
 plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
-           ['0', r'$\pi_2$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
+           ['0', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
            **axes_tick_font)
 plt.yticks(**axes_tick_font)
 plt.tick_params(direction='in')
@@ -89,19 +89,19 @@ plt.legend()
 plt.show()
 
 # Plot real & imag part of h1
-plt.figure(figsize=(30, 10))
+plt.figure(figsize=(15, 10))
 plt.plot(h2_prime['time'], mod(h2_prime['real'], h2_prime['imag']), 'r-',
          linewidth=1.2, label='real component')
-# plt.plot(h2_prime['time'], h2_prime['imag'], 'b-',
-#         linewidth=1.2, label='imaginary component')
+plt.plot(h2_prime['time'], h2_prime['imag'], 'b-',
+         linewidth=1.2, label='imaginary component')
 plt.xlabel('Time / s', **axis_label_font)
-plt.ylabel(r'h$_{1}$`(t)', **axis_label_font)
+plt.ylabel(r'h$_{2}$`(t)', **axis_label_font)
 plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
-           ['0', r'$\pi_2$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
+           ['0', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
            **axes_tick_font)
 plt.yticks(**axes_tick_font)
 plt.tick_params(direction='in')
 plt.xlim(0, 2*np.pi)
-plt.ylim(h2_min, h2_max)
+plt.ylim(h2_min - 20, h2_max)
 plt.legend()
 plt.show()
