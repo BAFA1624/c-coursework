@@ -541,7 +541,7 @@ int main(int argc, char* argv[])
     // Data provided uses N=200
     N = 200;
 
-    Measurement* h3 = q_3h("data.txt", N);
+    Measurement* h3 = q_3h("h3.txt", N);
 
     Measurement* H3 = q_3j(h3, N);
 
@@ -557,37 +557,6 @@ int main(int argc, char* argv[])
     }
 
     q_3l(times, i_h3, N, "inv_3.txt");
-
-    N = 128;
-    size_t n = 100;
-
-    Complex* h1 = h1_and_h2[0];
-    Complex* test = (Complex*)malloc(N * sizeof(Complex));
-
-    for (i = 0; i < N; ++i) {
-	if (i < n)
-	    test[i] = h1[i];
-	else {
-	    Complex a;
-	    a.r = 0.;
-	    a.i = 0.;
-	    printComplex(&a);
-	    test[i] = a;
-	}
-    }
-
-    Complex* H1 = DFT(test, N);
-
-    for (i = 0; i < N; ++i) {
-	printf("%ld: ", i);
-	printComplex(&h1[i]);
-	putchar('\t');
-	printComplex(&H1[i]);
-	putchar('\n');
-    }
-
-    free(test);
-    free(H1);
 
     // Freeing memory
     free(times);
