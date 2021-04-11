@@ -67,7 +67,7 @@ else:
     p2_ymax = h2_i_max
 
 # Plot real & imag part of h1
-plt.figure(figsize=(30, 10))
+plt.figure(figsize=(10, 10))
 plt.plot(h1['time'], h1['real'],
          'r-', linewidth=1.2, label='real component')
 plt.plot(h1['time'], h1['imag'], 'b-',
@@ -87,7 +87,8 @@ plt.show()
 
 # Plot real part of h2 (has no imaginary part)
 plt.figure(figsize=(10, 10))
-plt.plot(h2['time'], mod(h2['real'], h2['imag']), 'r-', linewidth=1.2)
+plt.plot(h2['time'], h2['real'], 'r-', linewidth=1.2)
+plt.plot(h2['time'], h2['imag'], 'b-', linewidth=1.2)
 plt.xlabel('Time / s', **axis_label_font)
 plt.ylabel(r'h$_{2}$(t)')
 plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
@@ -96,5 +97,5 @@ plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
 plt.yticks(**axes_tick_font)
 plt.tick_params(direction='in')
 plt.xlim(0, 2*np.pi)
-plt.ylim(p2_ymin, p2_ymax)
+plt.ylim(-10, 140)
 plt.show()
