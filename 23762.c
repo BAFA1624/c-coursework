@@ -114,38 +114,25 @@ Complex h_2(const double time)
     return result;
 }
 
-// Returns 1 (true) if x is in ls
-// else returns 0
-// Assumes ls is a sorted list
+// Implementation of binary search to for a given value in a list
+// ls MUST be sorted
 int checkIdx(const size_t* ls, const size_t sz, const size_t x)
-{
-    size_t i;
-    for (i = 0; i < sz; ++i) {
-	if (ls[i] >= x) {
-	    // if ls[i]==x, x is in the list
-	    if (ls[i] == x) {
-		return 1;
-	    } else {
-		// if ls[i] > x, it isn't in the list
-		return 0;
-	    }
-	}
-    }
-}
-
-int checkIdx_binarysearch(const size_t* ls, const size_t sz, const size_t x)
 {
     size_t current_idx, left_idx = 0, right_idx = sz - 1;
 
-    // Quick fix to prevent segfault caused when sz = 1 (sz = number of elements in ls)
+    // Check when sz == 1 as while loop --> segfault if sz == 1
     if (sz == 1) {
+	// Value found!
 	if (ls[0] == x)
 	    return 1;
+	// Value not found!
 	else
 	    return 0;
     }
 
+    // Until all indexes are checked
     while (left_idx <= right_idx) {
+	// Check index in the middle between left_idx & right_idx
 	current_idx = floor((left_idx + right_idx) / 2);
 	if (ls[current_idx] < x) {
 	    left_idx = current_idx + 1;
@@ -243,17 +230,17 @@ Complex* DFT(const Complex* samples, const size_t N)
 // Does nothing by design, e.g. for use in if/else or switch statements
 void pass() { }
 
-// Calculates IFT of N provided samples.
+// Calculates IDFT of N provided samples.
 // samples --> Array of pointers to Complex values to transform.
 // N --> Number of elements in samples.
 // skip_n --> Array of indexes to skip or include, depending on what skip is set to
 // sz --> Number of elements in skip_n
-Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
+Complex* IDFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 {
     // Alloc memory for resulting array
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
     if (!arr) {
-	errorExit("\n<IFT> malloc failed.\n");
+	errorExit("\n<IDFT> malloc failed.\n");
     }
 
     // Sorting skip_n to allow checkIdx to be more efficient
@@ -275,7 +262,7 @@ Complex* IFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 	h_k.i = 0.;
 
 	for (n = 0; n < N; n++) {
-	    if (checkIdx_binarysearch(skip_n, sz, n)) {
+	    if (checkIdx(skip_n, sz, n)) {
 		pass();
 	    } else {
 		// Adjust value of theta for current sample
@@ -394,7 +381,7 @@ Complex** q_3de(const double* times, Complex** samples, const size_t N)
     return results;
 }
 
-// Applies Inverse Fourier Transform (IFT) to provided sets of H_x in samples.
+// Applies Inverse Fourier Transform (IDFT) to provided sets of H_x in samples.
 // In this case samples will provided by result of q_3de.
 Complex** q_3f(Complex** samples, size_t N)
 {
@@ -407,8 +394,8 @@ Complex** q_3f(Complex** samples, size_t N)
     size_t h2_prime_skip[1] = { 0 };
 
     // Calculate Inverse Fourier Transform of H1 & H2 respectively.
-    Complex* h1_prime = IFT(H1, N, h1_prime_skip, 1);
-    Complex* h2_prime = IFT(H2, N, h2_prime_skip, 1);
+    Complex* h1_prime = IDFT(H1, N, h1_prime_skip, 1);
+    Complex* h2_prime = IDFT(H2, N, h2_prime_skip, 1);
 
     // Allocate memory for results, check for fail.
     Complex** results = (Complex**)malloc(2 * sizeof(Complex*));
@@ -506,7 +493,7 @@ Measurement* q_3j(const Measurement* data, const size_t N)
     return results;
 }
 
-// Applies IFT to 4 terms of H3 with largest amplitude
+// Applies IDFT to 4 terms of H3 with largest amplitude
 Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
 {
     // Allocating memory for transformed version of data
@@ -533,7 +520,7 @@ Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
 
     n = N - n_largest_vals;
     if (n <= 0) {
-	errorExit("\n<q_3k> Performing IFT on n <= 0 values.");
+	errorExit("\n<q_3k> Performing IDFT on n <= 0 values.");
     }
 
     skip_n = (size_t*)malloc(n * sizeof(size_t));
@@ -554,7 +541,7 @@ Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
 	z_arr[i] = samples[i].z;
     }
 
-    result = IFT(z_arr, N, skip_n, 196);
+    result = IDFT(z_arr, N, skip_n, 196);
 
     return result;
 }
