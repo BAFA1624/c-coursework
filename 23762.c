@@ -169,7 +169,7 @@ double* linspaceD(const double start, const double end, const size_t N)
 
     // Calculate increment for N evenly spaced values from start -> end
     // 'val' keeps track of current value
-    double increment = (double)(end - start) / (N - 1);
+    double increment = (double)(end - start) / N;
     double val = start;
 
     // Add values to arr, incrementing val every time

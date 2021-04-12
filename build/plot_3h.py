@@ -89,7 +89,7 @@ plt.legend()
 plt.show()
 
 # Plot real & imag part of h1
-plt.figure(figsize=(15, 10))
+plt.figure(figsize=(10, 10))
 plt.plot(h2_prime['time'], h2_prime['real'], 'r-',
          linewidth=1.2, label='real component')
 plt.plot(h2_prime['time'], h2_prime['imag'], 'b-',
@@ -102,6 +102,6 @@ plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
 plt.yticks(**axes_tick_font)
 plt.tick_params(direction='in')
 plt.xlim(0, 2*np.pi)
-plt.ylim(h2_min - 20, h2_max)
+# plt.ylim()
 plt.legend()
 plt.show()
