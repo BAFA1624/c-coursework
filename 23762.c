@@ -273,17 +273,11 @@ Complex* IDFT(const Complex* samples, const size_t N, const size_t* skip_n, cons
     // Copy samples --> conjugate_samples
     memcpy((void*)conjugate_samples, samples, N * sizeof(Complex));
 
-    // Apply conjugate
-    size_t i;
-    /*for (i = 0; i < N; ++i) {
-	cConjugate(&conjugate_samples[i]);
-    }*/
-
     // Apply DFT to conjugates of original samples
     Complex* result = DFT(conjugate_samples, N, skip_n, sz, true);
 
     // Divide all members of result by N.
-    for (i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i) {
 	result[i].r /= N;
 	result[i].i /= N;
     }
