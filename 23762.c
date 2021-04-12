@@ -264,25 +264,14 @@ Complex* DFT(const Complex* samples, const size_t N, const size_t* skip_n, const
 // sz --> Number of elements in skip_n
 Complex* IDFT(const Complex* samples, const size_t N, const size_t* skip_n, const size_t sz)
 {
-    // Alloc mem for complex conjugates of samples
-    Complex* conjugate_samples = (Complex*)malloc(N * sizeof(Complex));
-    if (!conjugate_samples) {
-	errorExit("\n<IDFT> malloc failed.\n");
-    }
-
-    // Copy samples --> conjugate_samples
-    memcpy((void*)conjugate_samples, samples, N * sizeof(Complex));
-
-    // Apply DFT to conjugates of original samples
-    Complex* result = DFT(conjugate_samples, N, skip_n, sz, true);
+    // Apply DFT to samples, setting IDFT as true and passing on skip_n and sz
+    Complex* result = DFT(samples, N, skip_n, sz, true);
 
     // Divide all members of result by N.
     for (size_t i = 0; i < N; ++i) {
 	result[i].r /= N;
 	result[i].i /= N;
     }
-
-    free(conjugate_samples);
 
     return result;
 }
