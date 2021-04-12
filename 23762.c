@@ -270,9 +270,7 @@ Complex* IDFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 	h_k.i = 0.;
 
 	for (n = 0; n < N; n++) {
-	    if (checkIdx(skip_n, sz, n)) {
-		pass();
-	    } else {
+	    if (!checkIdx(skip_n, sz, n)) {
 		// Adjust value of theta for current sample
 		theta_k = theta * n;
 
