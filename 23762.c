@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -144,7 +145,7 @@ int checkIdx(const size_t* ls, const size_t sz, const size_t x)
     // Until all indexes are checked
     while (left_idx <= right_idx) {
 	// Check index in the middle between left_idx & right_idx
-	current_idx = floor((left_idx + right_idx) / 2);
+	current_idx = floor((left_idx + right_idx) / 2.);
 
 	if (ls[current_idx] < x) {
 	    // Sorted list --> if ls[current_idx] < x, then all vals before current_idx < x.
@@ -203,7 +204,7 @@ Complex* linspaceComplex(Complex (*f)(double), const double* samples, const size
 }
 
 // Discrete Fourier Transform taking array of samples
-Complex* DFT(const Complex* samples, const size_t N, size_t* skip_n, size_t sz)
+Complex* DFT(const Complex* samples, const size_t N, const size_t* skip_n, const size_t sz, const bool IDFT)
 {
     // Alloc memory for resulting array & declare vars
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
@@ -211,54 +212,57 @@ Complex* DFT(const Complex* samples, const size_t N, size_t* skip_n, size_t sz)
 	errorExit("\n<DFT> malloc failed.\n");
     }
 
-    // Sorting skip_n to ensure binary search works
-    qsort((void*)skip_n, sz, sizeof(size_t), compareSize_t);
+    // Sorting skip_n to ensure binary search in checkIdx works. Only necessary if skip_n exists
+    if (skip_n != NULL && sz != 0)
+	qsort((void*)skip_n, sz, sizeof(size_t), compareSize_t);
 
     // H_n & h_k keep track of which values are currently in use
     // theta & theta_k store value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
     Complex H_n, h_k;
-    double theta, theta_k;
+    double theta_nk, theta_n, theta = 2. * pi / N;
+
+    // If performing DFT (IDFT == false), multiply theta by -1
+    if (!IDFT)
+	theta *= -1;
+
     size_t n, k;
 
     // For every values H_n, sum contributions of all h_k then add to resulting array
     for (n = 0; n < N; n++) {
-	// Precalculate -2 * pi * n / N to prevent repetition in nested for loop
-	theta = -2. * pi * n / N;
+	// Calculate theta for this index n
+	theta_n = theta * n;
 
 	// initialize H_n
 	H_n.r = 0.;
 	H_n.i = 0.;
 
 	for (k = 0; k < N; k++) {
-	    if (!checkIdx(skip_n, sz, n)) {
+	    if (!checkIdx(skip_n, sz, k)) {
 		// Adjust value of theta for current sample
-		theta_k = theta * k;
+		theta_nk = theta_n * k;
 
 		// Retrieve k'th sample
 		h_k = samples[k];
 
 		// (a + bi)(c + di) = (ac - bd) + (ad + bc)i
 		// h_k(t_k).exp(-2.pi.n.k/N):
-		H_n.r += (h_k.r * cos(theta_k) - h_k.i * sin(theta_k));
-		H_n.i += (h_k.r * sin(theta_k) + h_k.i * cos(theta_k));
+		H_n.r += (h_k.r * cos(theta_nk) - h_k.i * sin(theta_nk));
+		H_n.i += (h_k.r * sin(theta_nk) + h_k.i * cos(theta_nk));
 	    }
 	}
-
+	// Add to result array
 	arr[n] = H_n;
     }
 
     return arr;
 }
 
-// Placeholder function with similar function to 'pass' statement in Python
-// Does nothing by design, e.g. for use in if/else or switch statements
-
 // Calculates IDFT of N provided samples.
 // samples --> Array of pointers to Complex values to transform.
 // N --> Number of elements in samples.
 // skip_n --> Array of indexes to skip or include, depending on what skip is set to
 // sz --> Number of elements in skip_n
-Complex* IDFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
+Complex* IDFT(const Complex* samples, const size_t N, const size_t* skip_n, const size_t sz)
 {
     // Alloc mem for complex conjugates of samples
     Complex* conjugate_samples = (Complex*)malloc(N * sizeof(Complex));
@@ -271,18 +275,20 @@ Complex* IDFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 
     // Apply conjugate
     size_t i;
-    for (i = 0; i < N; ++i) {
+    /*for (i = 0; i < N; ++i) {
 	cConjugate(&conjugate_samples[i]);
-    }
+    }*/
 
     // Apply DFT to conjugates of original samples
-    Complex* result = DFT(conjugate_samples, N, skip_n, sz);
+    Complex* result = DFT(conjugate_samples, N, skip_n, sz, true);
 
     // Divide all members of result by N.
     for (i = 0; i < N; ++i) {
 	result[i].r /= N;
 	result[i].i /= N;
     }
+
+    free(conjugate_samples);
 
     return result;
 }
@@ -314,7 +320,7 @@ void writeComplex(const double* time_data, const Complex* z_data, const size_t N
 // Question answers
 
 // Implementation for 3b
-Complex** q_3b(double* times, size_t N)
+Complex** q_3b(const double* times, const size_t N)
 {
     // Allocating memory for arrays to store results in
     Complex* h1_vals = (Complex*)malloc(N * sizeof(Complex));
@@ -356,8 +362,8 @@ Complex** q_3de(const double* times, Complex** samples, const size_t N)
     }
 
     // Calculating H1 & H2 using DFT
-    Complex* H1 = DFT(samples[0], N, NULL, 0);
-    Complex* H2 = DFT(samples[1], N, NULL, 0);
+    Complex* H1 = DFT(samples[0], N, NULL, 0, false);
+    Complex* H2 = DFT(samples[1], N, NULL, 0, false);
 
     // Add H1 & H2 --> results
     results[0] = H1;
@@ -471,7 +477,7 @@ Measurement* q_3j(const Measurement* data, const size_t N)
     }
 
     // Applying DFT to data with DFT_samples
-    Complex* DFT_data = DFT(z_arr, N, NULL, 0);
+    Complex* DFT_data = DFT(z_arr, N, NULL, 0, false);
 
     Measurement* results = (Measurement*)malloc(N * sizeof(Measurement));
     if (!results) {
@@ -542,6 +548,8 @@ Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
 
     result = IDFT(z_arr, N, skip_n, 196);
 
+    free(z_arr);
+
     return result;
 }
 
@@ -589,6 +597,7 @@ int main(int argc, char* argv[])
     }
 
     for (i = 0; i < N; ++i) {
+	// printf("h3[%ld].time = %lf\n", i, h3[i].time);
 	times[i] = h3[i].time;
     }
 
