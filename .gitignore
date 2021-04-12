@@ -1,3 +1,4 @@
+build/git_push
 build/.cache/
 build/.cmake/
 build/CMakeFiles/
