@@ -134,14 +134,19 @@ int checkIdx(const size_t* ls, const size_t sz, const size_t x)
     while (left_idx <= right_idx) {
 	// Check index in the middle between left_idx & right_idx
 	current_idx = floor((left_idx + right_idx) / 2);
+
 	if (ls[current_idx] < x) {
+	    // Sorted list --> if ls[current_idx] < x, then all vals before current_idx < x.
 	    left_idx = current_idx + 1;
 	} else if (ls[current_idx] > x) {
+	    // Sorted list --> if ls[current_idx] > x, then all vals after current_idx > x.
 	    right_idx = current_idx - 1;
 	} else {
+	    // Value found!
 	    return 1;
 	}
     }
+    // Value not found!
     return 0;
 }
 
@@ -170,15 +175,18 @@ double* linspaceD(const double start, const double end, const size_t N)
 }
 
 // Same as linspaceD, except values are generated using provided function, func.
-Complex* linspaceComplex(Complex (*f)(double), const double* times, const size_t N)
+Complex* linspaceComplex(Complex (*f)(double), const double* samples, const size_t N)
 {
+    // Alloc memory & check for results
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
     if (!arr) {
 	errorExit("\n<linespaceComplex> malloc failed.\n");
     }
+
+    // Generate value for every sample in samples using specified function
     size_t i;
     for (i = 0; i < N; ++i) {
-	arr[i] = f(times[i]);
+	arr[i] = f(samples[i]);
     }
     return arr;
 }
