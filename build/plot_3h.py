@@ -90,7 +90,7 @@ plt.show()
 
 # Plot real & imag part of h1
 plt.figure(figsize=(15, 10))
-plt.plot(h2_prime['time'], mod(h2_prime['real'], h2_prime['imag']), 'r-',
+plt.plot(h2_prime['time'], h2_prime['real'], 'r-',
          linewidth=1.2, label='real component')
 plt.plot(h2_prime['time'], h2_prime['imag'], 'b-',
          linewidth=1.2, label='imaginary component')
