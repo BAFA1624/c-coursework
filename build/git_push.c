@@ -101,6 +101,12 @@ int main(int argc, char* argv[])
 	    goto error;
 	}
 
+	printf("\nCurrent working tree status:\n");
+	status = system("git status") / 256;
+	if (status != 0) {
+	    printf("\n----\nFailed to show working tree status??\n----\n");
+	}
+
 	strlcat(push_msg, "git commit -m \"Auto Push: ", sz);
 	strlcat(push_msg, argv[1], sz);
 	strlcat(push_msg, "\"", sz);
