@@ -120,6 +120,11 @@ int checkIdx(const size_t* ls, const size_t sz, const size_t x)
 {
     size_t current_idx, left_idx = 0, right_idx = sz - 1;
 
+    // Prechecks:
+    // If NULL passed to ls or sz = 0, empty list --> no skipped values
+    if (!ls || sz == 0) {
+	return 1;
+    }
     // Check when sz == 1 as while loop --> segfault if sz == 1
     if (sz == 1) {
 	// Value found!
@@ -192,13 +197,16 @@ Complex* linspaceComplex(Complex (*f)(double), const double* samples, const size
 }
 
 // Discrete Fourier Transform taking array of samples
-Complex* DFT(const Complex* samples, const size_t N)
+Complex* DFT(const Complex* samples, const size_t N, size_t* skip_n, size_t sz)
 {
     // Alloc memory for resulting array & declare vars
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
     if (!arr) {
 	errorExit("\n<DFT> malloc failed.\n");
     }
+
+    // Sorting skip_n to ensure binary search works
+    qsort((void*)skip_n, sz, sizeof(size_t), compareSize_t);
 
     // H_n & h_k keep track of which values are currently in use
     // theta & theta_k store value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
@@ -216,16 +224,18 @@ Complex* DFT(const Complex* samples, const size_t N)
 	H_n.i = 0.;
 
 	for (k = 0; k < N; k++) {
-	    // Adjust value of theta for current sample
-	    theta_k = theta * k;
+	    if (!checkIdx(skip_n, sz, n)) {
+		// Adjust value of theta for current sample
+		theta_k = theta * n;
 
-	    // Retrieve k'th sample
-	    h_k = samples[k];
+		// Retrieve k'th sample
+		H_n = samples[n];
 
-	    // (a + bi)(c + di) = (ac - bd) + (ad + bc)i
-	    // h_k(t_k).exp(-2.pi.n.k/N):
-	    H_n.r += (h_k.r * cos(theta_k) - h_k.i * sin(theta_k));
-	    H_n.i += (h_k.i * cos(theta_k) + h_k.r * sin(theta_k));
+		// (a + bi)(c + di) = (ac - bd) + (ad + bc)i
+		// h_k(t_k).exp(-2.pi.n.k/N):
+		h_k.r += (H_n.r * cos(theta_k) - H_n.i * sin(theta_k));
+		h_k.i += (H_n.r * sin(theta_k) + H_n.i * cos(theta_k));
+	    }
 	}
 
 	arr[n] = H_n;
@@ -236,7 +246,6 @@ Complex* DFT(const Complex* samples, const size_t N)
 
 // Placeholder function with similar function to 'pass' statement in Python
 // Does nothing by design, e.g. for use in if/else or switch statements
-void pass() { }
 
 // Calculates IDFT of N provided samples.
 // samples --> Array of pointers to Complex values to transform.
@@ -270,9 +279,8 @@ Complex* IDFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 	h_k.i = 0.;
 
 	for (n = 0; n < N; n++) {
-	    if (checkIdx(skip_n, sz, n)) {
-		pass();
-	    } else {
+	    // If n is not in skip_n list, this index contributes to h_k
+	    if (!checkIdx(skip_n, sz, n)) {
 		// Adjust value of theta for current sample
 		theta_k = theta * n;
 
@@ -286,6 +294,7 @@ Complex* IDFT(const Complex* samples, size_t N, size_t* skip_n, size_t sz)
 	    }
 	}
 
+	// Div by size of array then add to results array.
 	h_k.r = (double)h_k.r / N;
 	h_k.i = (double)h_k.i / N;
 
@@ -352,7 +361,6 @@ Complex** q_3b(double* times, size_t N)
 // Questions 3.d & 3.e:
 // 	- 3.d: Perform DFT on h1(t) & h2(t) --> H1(w) & H2(w)
 // 	       typeof(Hn(w)) = Complex*
-// 	       Calulated using DFT_functions
 // 	- 3.e: Print results to screen
 // Also returns array of {H1(w), H2(w)} for use in part 3.f
 Complex** q_3de(const double* times, Complex** samples, const size_t N)
@@ -364,9 +372,9 @@ Complex** q_3de(const double* times, Complex** samples, const size_t N)
 	errorExit("\n<q_3de> malloc failed.\n");
     }
 
-    // Calculating H1 & H2 using DFT_function
-    Complex* H1 = DFT(samples[0], N);
-    Complex* H2 = DFT(samples[1], N);
+    // Calculating H1 & H2 using DFT
+    Complex* H1 = DFT(samples[0], N, NULL, 0);
+    Complex* H2 = DFT(samples[1], N, NULL, 0);
 
     // Add H1 & H2 --> results
     results[0] = H1;
@@ -480,7 +488,7 @@ Measurement* q_3j(const Measurement* data, const size_t N)
     }
 
     // Applying DFT to data with DFT_samples
-    Complex* DFT_data = DFT(z_arr, N);
+    Complex* DFT_data = DFT(z_arr, N, NULL, 0);
 
     Measurement* results = (Measurement*)malloc(N * sizeof(Measurement));
     if (!results) {
