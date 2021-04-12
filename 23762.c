@@ -232,15 +232,15 @@ Complex* DFT(const Complex* samples, const size_t N, size_t* skip_n, size_t sz)
 	for (k = 0; k < N; k++) {
 	    if (!checkIdx(skip_n, sz, n)) {
 		// Adjust value of theta for current sample
-		theta_k = theta * n;
+		theta_k = theta * k;
 
 		// Retrieve k'th sample
-		H_n = samples[n];
+		h_k = samples[k];
 
 		// (a + bi)(c + di) = (ac - bd) + (ad + bc)i
 		// h_k(t_k).exp(-2.pi.n.k/N):
-		h_k.r += (H_n.r * cos(theta_k) - H_n.i * sin(theta_k));
-		h_k.i += (H_n.r * sin(theta_k) + H_n.i * cos(theta_k));
+		H_n.r += (h_k.r * cos(theta_k) - h_k.i * sin(theta_k));
+		H_n.i += (h_k.r * sin(theta_k) + h_k.i * cos(theta_k));
 	    }
 	}
 
