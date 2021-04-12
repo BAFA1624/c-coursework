@@ -264,63 +264,14 @@ Complex* DFT(const Complex* samples, const size_t N, const size_t* skip_n, const
 // sz --> Number of elements in skip_n
 Complex* IDFT(const Complex* samples, const size_t N, const size_t* skip_n, const size_t sz)
 {
-    // Alloc mem for complex conjugates of samples
-    Complex* conjugate_samples = (Complex*)malloc(N * sizeof(Complex));
-    if (!conjugate_samples) {
-	errorExit("\n<IDFT> malloc failed.\n");
-    }
-
-    // Copy samples --> conjugate_samples
-    memcpy((void*)conjugate_samples, samples, N * sizeof(Complex));
-
-<<<<<<< HEAD
-    // H_n & h_k keep track of which values are currently in use
-    // theta & theta_k store value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
-    Complex H_n, h_k;
-    double theta, theta_k;
-    size_t n, k;
-
-    // For every values H_n, sum contributions of all h_k then add to resulting array
-    for (k = 0; k < N; k++) {
-	// Precalculate 2 * pi * n / N to prevent repetition in nested for loop
-	theta = 2. * pi * k / N;
-
-	// initialize h_k
-	h_k.r = 0.;
-	h_k.i = 0.;
-
-	for (n = 0; n < N; n++) {
-	    if (!checkIdx(skip_n, sz, n)) {
-		// Adjust value of theta for current sample
-		theta_k = theta * n;
-
-		// Retrieve k'th sample
-		H_n = samples[n];
-
-		// (a + bi)(c + di) = (ac - bd) + (ad + bc)i
-		// h_k(t_k).exp(-2.pi.n.k/N):
-		h_k.r += (H_n.r * cos(theta_k) - H_n.i * sin(theta_k));
-		h_k.i += (H_n.r * sin(theta_k) + H_n.i * cos(theta_k));
-	    }
-	}
-=======
-    // Apply conjugate
-    size_t i;
-    /*for (i = 0; i < N; ++i) {
-	cConjugate(&conjugate_samples[i]);
-    }*/
->>>>>>> experiment
-
-    // Apply DFT to conjugates of original samples
-    Complex* result = DFT(conjugate_samples, N, skip_n, sz, true);
+    // Apply DFT to samples, setting IDFT param as true and passing skip_n and sz on to DFT
+    Complex* result = DFT(samples, N, skip_n, sz, true);
 
     // Divide all members of result by N.
-    for (i = 0; i < N; ++i) {
+    for (size_t i = 0; i < N; ++i) {
 	result[i].r /= N;
 	result[i].i /= N;
     }
-
-    free(conjugate_samples);
 
     return result;
 }
