@@ -1,12 +1,9 @@
 #include <math.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 double pi = 3.14159265358979323846;
-double pi_2 = 1.57079632679489661923;
-double pi_4 = 0.78539816339744830962;
 double e = 2.7182818284590452354;
 
 #ifdef _WIN32
@@ -91,7 +88,7 @@ int checkIdx(const size_t* ls, const size_t sz, const size_t x)
 }
 
 // Produces range of N long doubles from start -> end exclusive. Simple version of numpy.linspace
-double* linspaceD(const double start, const double end, const size_t N)
+double* linspaceDouble(const double start, const double end, const size_t N)
 {
     // Allocate memory for result, calculate increment size for N values in given range
     double* arr = (double*)malloc(N * sizeof(double));
@@ -394,12 +391,12 @@ void q_3g(Complex** data, double* times, size_t N)
     writeComplex(times, data[1], N, "inv_2.txt");
 }
 
-// Read data in from data.txt, return as array of Complexes
-Measurement* q_3h(const char* filename, size_t N)
+// Read data in from h3.txt, return as array of Complexes
+Measurement* q_3i(const char* filename, size_t N)
 {
     FILE* fp = fopen(filename, "r");
     if (!fp) {
-	errorExit("\n<q_3h> Failed to open data.txt.\n");
+	errorExit("\n<q_3h> Failed to open h3.txt.\n");
     }
 
     // Allocating vars to keep track of array size and arrays for data
@@ -492,9 +489,9 @@ Complex* q_3k(Measurement* samples, const size_t N)
     qsort(samples_sorted, N, sizeof(Measurement), compareMeasurement);
 
     // Add all except top 4 values of samples_sorted to list of idx to skip
-    size_t i, skip_n[196];
+    size_t i, skip_n[194];
 
-    for (i = 0; i < N - 4; ++i) {
+    for (i = 0; i < N - 6; ++i) {
 	skip_n[i] = samples_sorted[i].n;
     }
 
@@ -507,7 +504,7 @@ Complex* q_3k(Measurement* samples, const size_t N)
 	z_arr[i] = samples[i].z;
     }
 
-    result = IFT(z_arr, N, skip_n, 196);
+    result = IFT(z_arr, N, skip_n, 194);
 
     return result;
 }
@@ -525,7 +522,7 @@ int main(int argc, char* argv[])
 {
     // Set number of samples & generate time values
     size_t i, N = 100;
-    double* times = linspaceD(0, 2 * pi, N);
+    double* times = linspaceDouble(0, 2 * pi, N);
 
     printf("\nvalue of N = %ld.\n", N);
 
@@ -542,9 +539,13 @@ int main(int argc, char* argv[])
     // Data provided uses N=200
     N = 200;
 
-    Measurement* h3 = q_3h("data.txt", N);
+    Measurement* h3 = q_3i("C:\\Users\\ben\\Desktop\\gitrepos\\c-coursework\\h3.txt", N);
 
     Measurement* H3 = q_3j(h3, N);
+
+    for (i = 0; i < N; ++i) {
+        printf("%lf + %lfi\n", H3[i].z.r, H3[i].z.i);
+    }
 
     Complex* i_h3 = q_3k(H3, N);
 
@@ -558,37 +559,6 @@ int main(int argc, char* argv[])
     }
 
     q_3l(times, i_h3, N, "inv_3.txt");
-
-    N = 128;
-    size_t n = 100;
-
-    Complex* h1 = h1_and_h2[0];
-    Complex* test = (Complex*)malloc(N * sizeof(Complex));
-
-    for (i = 0; i < N; ++i) {
-	if (i < n)
-	    test[i] = h1[i];
-	else {
-	    Complex a;
-	    a.r = 0.;
-	    a.i = 0.;
-	    printComplex(&a);
-	    test[i] = a;
-	}
-    }
-
-    Complex* H1 = DFT(test, N);
-
-    for (i = 0; i < N; ++i) {
-	printf("%ld: ", i);
-	printComplex(&h1[i]);
-	putchar('\t');
-	printComplex(&H1[i]);
-	putchar('\n');
-    }
-
-    free(test);
-    free(H1);
 
     // Freeing memory
     free(times);

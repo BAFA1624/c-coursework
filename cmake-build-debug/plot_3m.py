@@ -32,7 +32,7 @@ with open("inv_3.txt", 'r') as file:
     for line in reader:
         for key in line.keys():
             i_h3[key].append(np.float64(line[key]))
-
+print(i_h3)
 # Find y axis min/max for h1 & h2
 h3_min, h3_max = min(mod(h3['real'], h3['imag'])), max(
     mod(h3['real'], h3['imag']))
@@ -75,19 +75,19 @@ plt.legend()
 plt.show()
 
 
-# plt.figure(figsize=(10, 10))
-# plt.plot(i_h3['time'], i_h3['real'], 'b-',
-#         linewidth=1.2, label='Transformed real component')
-# plt.plot(i_h3['time'], i_h3['imag'], 'r--',
-#         linewidth=1.2, label='Transformed imaginary component')
-# plt.xlabel('Time / s', **axis_label_font)
-# plt.ylabel(r'h$_{3}$`(t)', **axis_label_font)
-# plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
-#           ['0', r'$\pi_2$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
-#           **axes_tick_font)
-# plt.yticks(**axes_tick_font)
-# plt.tick_params(direction='in')
-# plt.xlim(0, 2*np.pi)
-# plt.ylim(p1_ymin, p1_ymax)
-# plt.legend()
-# plt.show()
+plt.figure(figsize=(10, 10))
+plt.plot(i_h3['time'], i_h3['real'], 'b-',
+        linewidth=1.2, label='Transformed real component')
+plt.plot(i_h3['time'], i_h3['imag'], 'r--',
+        linewidth=1.2, label='Transformed imaginary component')
+plt.xlabel('Time / s', **axis_label_font)
+plt.ylabel(r'h$_{3}$`(t)', **axis_label_font)
+plt.xticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi],
+          ['0', r'$\pi_2$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2\pi$'],
+          **axes_tick_font)
+plt.yticks(**axes_tick_font)
+plt.tick_params(direction='in')
+plt.xlim(0, 2*np.pi)
+plt.ylim(p1_ymin, p1_ymax)
+plt.legend()
+plt.show()

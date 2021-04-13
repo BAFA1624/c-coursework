@@ -1,0 +1,3 @@
+C:/Users/ben/Desktop/gitrepos/c-coursework/cmake-build-debug/CMakeFiles/a.out.dir
+C:/Users/ben/Desktop/gitrepos/c-coursework/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/ben/Desktop/gitrepos/c-coursework/cmake-build-debug/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,4 @@
+"H:\CLion 2020.3.1\bin\cmake\win\bin\cmake.exe" -DCMAKE_BUILD_TYPE=Debug -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - MinGW Makefiles" C:\Users\ben\Desktop\gitrepos\c-coursework
+-- Configuring done
+-- Generating done
+-- Build files have been written to: C:/Users/ben/Desktop/gitrepos/c-coursework/cmake-build-debug
