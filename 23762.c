@@ -126,12 +126,14 @@ Complex h_2(const double time)
 int checkIdx(const size_t* ls, const size_t sz, const size_t x)
 {
     size_t current_idx, left_idx = 0, right_idx = sz - 1;
-
+    printf("\t\t\t\tls = %p, sz = %ld, x = %ld\n", (void*)ls, sz, x);
+    printf("\t\t\t\t1\n");
     // Prechecks:
     // If NULL passed to ls or sz = 0, empty list --> no skipped values / value not found
     if (!ls || sz == 0) {
 	return 0;
     }
+    printf("\t\t\t\t2\n");
     // Check when sz == 1 as while loop --> segfault if sz == 1
     if (sz == 1) {
 	// Value found!
@@ -141,6 +143,7 @@ int checkIdx(const size_t* ls, const size_t sz, const size_t x)
 	else
 	    return 0;
     }
+    printf("\t\t\t\t3\n");
 
     // Until all indexes are checked
     while (left_idx <= right_idx) {
@@ -155,6 +158,7 @@ int checkIdx(const size_t* ls, const size_t sz, const size_t x)
 	    right_idx = current_idx - 1;
 	} else {
 	    // Value found!
+	    printf("\t\t\t\t4\n");
 	    return 1;
 	}
     }
@@ -206,15 +210,18 @@ Complex* linspaceComplex(Complex (*f)(double), const double* samples, const size
 // Discrete Fourier Transform taking array of samples
 Complex* DFT(const Complex* samples, const size_t N, const size_t* skip_n, const size_t sz, const bool IDFT)
 {
+    printf("\t\t\t1\n");
     // Alloc memory for resulting array & declare vars
     Complex* arr = (Complex*)malloc(N * sizeof(Complex));
     if (!arr) {
 	errorExit("\n<DFT> malloc failed.\n");
     }
 
+    printf("\t\t\t2\n");
     // Sorting skip_n to ensure binary search in checkIdx works. Only necessary if skip_n exists
-    if (skip_n != NULL && sz != 0)
+    if (skip_n != NULL && sz != 0) {
 	qsort((void*)skip_n, sz, sizeof(size_t), compareSize_t);
+    }
 
     // H_n & h_k keep track of which values are currently in use
     // theta & theta_k store value of exponent h_k(t_k).exp(-2.pi.n.k/N) for use in Euler's formula
@@ -264,15 +271,18 @@ Complex* DFT(const Complex* samples, const size_t N, const size_t* skip_n, const
 // sz --> Number of elements in skip_n
 Complex* IDFT(const Complex* samples, const size_t N, const size_t* skip_n, const size_t sz)
 {
+    printf("\t\t1\n");
     // Apply DFT to samples, setting IDFT as true and passing on skip_n and sz
     Complex* result = DFT(samples, N, skip_n, sz, true);
 
+    printf("\t\t2\n");
     // Divide all members of result by N.
     for (size_t i = 0; i < N; ++i) {
 	result[i].r /= N;
 	result[i].i /= N;
     }
 
+    printf("\t\t3\n");
     return result;
 }
 
@@ -373,28 +383,34 @@ Complex** q_3de(const double* times, Complex** samples, const size_t N)
 // In this case samples will provided by result of q_3de.
 Complex** q_3f(Complex** samples, size_t N)
 {
+    printf("\t1\n");
     // Unpack H1 & H2 from samples.
     Complex* H1 = samples[0];
     Complex* H2 = samples[1];
 
+    printf("\t2\n");
     // Arrays containing the indexes to skip in H1 & H2
     size_t h1_prime_skip[1] = { 1 };
     size_t h2_prime_skip[1] = { 0 };
 
+    printf("\t3\n");
     // Calculate Inverse Fourier Transform of H1 & H2 respectively.
     Complex* h1_prime = IDFT(H1, N, h1_prime_skip, 1);
-    Complex* h2_prime = IDFT(H2, N, h2_prime_skip, 1);
+    Complex* h2_prime = IDFT(H2, N, h2_prime_skip, 2);
 
+    printf("\t4\n");
     // Allocate memory for results, check for fail.
     Complex** results = (Complex**)malloc(2 * sizeof(Complex*));
     if (!results) {
 	errorExit("\n<q_3f> malloc failed.\n");
     }
 
+    printf("\t5\n");
     // Pack h1_prime & h2_prime into results so it can be returned for q_3f
     results[0] = h1_prime;
     results[1] = h2_prime;
 
+    printf("\t6\n");
     return results;
 }
 
@@ -551,41 +567,49 @@ int main(int argc, char* argv[])
     size_t i, N = 100;
     double* times = linspaceD(0, 2 * pi, N);
 
-    printf("\nvalue of N = %ld.\n", N);
-
+    printf("1\n");
     // Complete Q3.b, then pass the values --> array of array of Complexes
     Complex** h1_and_h2 = q_3b(times, N);
 
+    printf("2\n");
     // Complete Q3.d & Q3.e, then pass the values --> array of array of Complexes
     Complex** H1_and_H2 = q_3de(times, h1_and_h2, N);
 
+    printf("3\n");
     // Complex Q3.f, then pass the values --> array of array of Complexes
     Complex** prime_h1_and_h2 = q_3f(H1_and_H2, N);
 
+    printf("4\n");
     // Complex Q3.g
     q_3g(prime_h1_and_h2, times, N);
 
     // Data provided uses N=200
     N = 200;
 
+    printf("5\n");
     Measurement* h3 = q_3i("h3.txt", N);
 
+    printf("6\n");
     Measurement* H3 = q_3j(h3, N);
 
+    printf("7\n");
     Complex* i_h3 = q_3k(H3, N, 4);
 
+    printf("8\n");
     times = (double*)realloc(times, N * sizeof(double));
     if (!times) {
 	errorExit("\nFailed malloc for times in main.\n");
     }
 
+    printf("9\n");
     for (i = 0; i < N; ++i) {
-	// printf("h3[%ld].time = %lf\n", i, h3[i].time);
 	times[i] = h3[i].time;
     }
 
+    printf("10\n");
     q_3l(times, i_h3, N, "inv_3.txt");
 
+    printf("11\n");
     // Freeing memory
     free(times);
     free(h1_and_h2[0]);
