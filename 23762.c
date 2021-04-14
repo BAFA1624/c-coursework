@@ -1,6 +1,3 @@
-/*
-Seem to have fixed mem leak & stack smash. Mem leak seems to have been caused by arrays of sz = 2 being passed to checkIdx. Stack smash caused by unpacking of Complex** samples in q_3f to two arrays H1 & H2. Removed these arrays, just pass contents of samples directly to IDFT function.
-*/
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -390,6 +387,7 @@ Complex** q_3f(Complex** samples, size_t N)
     Complex* h1_prime = IDFT(samples[0], N, h1_prime_skip, 1);
     Complex* h2_prime = IDFT(samples[1], N, h2_prime_skip, 2);
 
+    // Freeing h1_pr... & h2_pr... to prevent memory leaks.
     free(h1_prime_skip);
     free(h2_prime_skip);
 
