@@ -1,6 +1,3 @@
-/*
-Seem to have fixed mem leak & stack smash. Mem leak seems to have been caused by arrays of sz = 2 being passed to checkIdx. Stack smash caused by unpacking of Complex** samples in q_3f to two arrays H1 & H2. Removed these arrays, just pass contents of samples directly to IDFT function.
-*/
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -332,7 +329,6 @@ Complex** q_3b(const double* times, const size_t N)
     writeComplex(times, h2_vals, N, "h2.txt");
 
     // Add to results array so they can be returned and used later
-
     results[0] = h1_vals;
     results[1] = h2_vals;
 
@@ -426,13 +422,11 @@ Measurement* q_3i(const char* filename, size_t N)
     if (!results) {
 	errorExit("\n<q_3h> malloc failed.\n");
     }
+
     int n;
-    double time;
+    double time, real = 0., imag = 0.;
     Complex z;
     size_t sz = 0;
-
-    double real = 0.;
-    double imag = 0.;
 
     // Use fscanf to read from file
     while (fscanf(fp, "%d, %lf, %lf, %lf", &n, &time, &real, &imag) != EOF && sz < N) {
@@ -461,7 +455,7 @@ Measurement* q_3j(const Measurement* data, const size_t N)
     }
 
     // Copying data into array
-    // DFT_samples is then applied to it
+    // DFT is then applied to it
     size_t i;
     for (i = 0; i < N; ++i) {
 	z_arr[i] = data[i].z;
@@ -498,17 +492,8 @@ Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
 	errorExit("\n<q_3k> malloc failed.\n");
     }
 
-    // Sorting a copy of the samples
-    // Allocating memory for copy of array to be sorted
-    Measurement* samples_sorted = (Measurement*)malloc(N * sizeof(Measurement));
-
-    // Copying raw bits of samples --> samples_sorted
-    // memcpy returns ptr --> samples_sorted, however as it already copied
-    // the bits of samples over,  this is unnecessary
-    memcpy((void*)samples_sorted, (void*)samples, N * sizeof(Measurement));
-
     // Sorting samples_sorted based on magnitude of Complex numbers stored within
-    qsort(samples_sorted, N, sizeof(Measurement), compareMeasurement);
+    qsort(samples, N, sizeof(Measurement), compareMeasurement);
 
     // Variables required for
     size_t i, n;
@@ -519,26 +504,35 @@ Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
 	errorExit("\n<q_3k> Performing IDFT on n <= 0 values.");
     }
 
+    // Allocate memory for values to skip
     skip_n = (size_t*)malloc(n * sizeof(size_t));
     if (!skip_n) {
 	errorExit("\n<q_3k> malloc failed.\n");
     }
 
+    // Copy up to n-th value into skip_n
     for (i = 0; i < n; ++i) {
-	skip_n[i] = samples_sorted[i].n;
+	skip_n[i] = samples[i].n;
     }
+
+    // Resort back into order by index.
+    qsort((void*)samples, N, sizeof(Measurement), compareSize_t);
 
     // Create array of Complex vals from original samples set
     Complex* z_arr = (Complex*)malloc(N * sizeof(Complex));
     if (!z_arr) {
 	errorExit("\n<q_3k> malloc failed.\n");
     }
+
+    // Copy Complex data to perform IDFT on.
     for (i = 0; i < N; ++i) {
 	z_arr[i] = samples[i].z;
     }
 
     result = IDFT(z_arr, N, skip_n, 196);
 
+    // Free memory to prevent leak.
+    free(skip_n);
     free(z_arr);
 
     return result;
