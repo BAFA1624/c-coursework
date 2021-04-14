@@ -500,8 +500,9 @@ Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
     size_t* skip_n;
 
     n = N - n_largest_vals;
-    if (n <= 0) {
-	errorExit("\n<q_3k> Performing IDFT on n <= 0 values.");
+    if (n <= 0 || n > N) {
+	printf("n = %ld\n", n);
+	errorExit("\n<q_3k> Performing IDFT on invalid n.");
     }
 
     // Allocate memory for values to skip
@@ -529,7 +530,7 @@ Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
 	z_arr[i] = samples[i].z;
     }
 
-    result = IDFT(z_arr, N, skip_n, 196);
+    result = IDFT(z_arr, N, skip_n, n);
 
     // Free memory to prevent leak.
     free(skip_n);
@@ -572,7 +573,7 @@ int main(int argc, char* argv[])
 
     Measurement* H3 = q_3j(h3, N);
 
-    Complex* i_h3 = q_3k(H3, N, 4);
+    Complex* i_h3 = q_3k(H3, N, 10);
 
     times = (double*)realloc(times, N * sizeof(double));
     if (!times) {
