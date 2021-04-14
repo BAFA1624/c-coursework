@@ -139,12 +139,6 @@ int checkIdx(const size_t* ls, const size_t sz, const size_t x)
 	// Value not found!
 	else
 	    return 0;
-    } else if (sz == 2) {
-	if (ls[0] == x || ls[1] == x) {
-	    return 1;
-	} else {
-	    return 0;
-	}
     }
 
     // Until all indexes are checked
@@ -382,9 +376,12 @@ Complex** q_3f(Complex** samples, size_t N)
     size_t* h1_prime_skip = (size_t*)malloc(sizeof(size_t));
     size_t* h2_prime_skip = (size_t*)malloc(sizeof(size_t));
 
+    h1_prime_skip[0] = 1;
+    h2_prime_skip[0] = 0;
+
     // Calculate Inverse Fourier Transform of H1 & H2 respectively.
     Complex* h1_prime = IDFT(samples[0], N, h1_prime_skip, 1);
-    Complex* h2_prime = IDFT(samples[1], N, h2_prime_skip, 2);
+    Complex* h2_prime = IDFT(samples[1], N, h2_prime_skip, 1);
 
     free(h1_prime_skip);
     free(h2_prime_skip);
