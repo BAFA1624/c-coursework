@@ -139,12 +139,6 @@ int checkIdx(const size_t* ls, const size_t sz, const size_t x)
 	// Value not found!
 	else
 	    return 0;
-    } else if (sz == 2) {
-	if (ls[0] == x || ls[1] == x) {
-	    return 1;
-	} else {
-	    return 0;
-	}
     }
 
     // Until all indexes are checked
@@ -329,7 +323,6 @@ Complex** q_3b(const double* times, const size_t N)
     writeComplex(times, h2_vals, N, "h2.txt");
 
     // Add to results array so they can be returned and used later
-
     results[0] = h1_vals;
     results[1] = h2_vals;
 
@@ -383,9 +376,12 @@ Complex** q_3f(Complex** samples, size_t N)
     size_t* h1_prime_skip = (size_t*)malloc(sizeof(size_t));
     size_t* h2_prime_skip = (size_t*)malloc(sizeof(size_t));
 
+    h1_prime_skip[0] = 1;
+    h2_prime_skip[0] = 0;
+
     // Calculate Inverse Fourier Transform of H1 & H2 respectively.
     Complex* h1_prime = IDFT(samples[0], N, h1_prime_skip, 1);
-    Complex* h2_prime = IDFT(samples[1], N, h2_prime_skip, 2);
+    Complex* h2_prime = IDFT(samples[1], N, h2_prime_skip, 1);
 
     // Freeing h1_pr... & h2_pr... to prevent memory leaks.
     free(h1_prime_skip);
@@ -424,13 +420,11 @@ Measurement* q_3i(const char* filename, size_t N)
     if (!results) {
 	errorExit("\n<q_3h> malloc failed.\n");
     }
+
     int n;
-    double time;
+    double time, real = 0., imag = 0.;
     Complex z;
     size_t sz = 0;
-
-    double real = 0.;
-    double imag = 0.;
 
     // Use fscanf to read from file
     while (fscanf(fp, "%d, %lf, %lf, %lf", &n, &time, &real, &imag) != EOF && sz < N) {
@@ -459,7 +453,7 @@ Measurement* q_3j(const Measurement* data, const size_t N)
     }
 
     // Copying data into array
-    // DFT_samples is then applied to it
+    // DFT is then applied to it
     size_t i;
     for (i = 0; i < N; ++i) {
 	z_arr[i] = data[i].z;
@@ -496,47 +490,48 @@ Complex* q_3k(Measurement* samples, const size_t N, size_t n_largest_vals)
 	errorExit("\n<q_3k> malloc failed.\n");
     }
 
-    // Sorting a copy of the samples
-    // Allocating memory for copy of array to be sorted
-    Measurement* samples_sorted = (Measurement*)malloc(N * sizeof(Measurement));
-
-    // Copying raw bits of samples --> samples_sorted
-    // memcpy returns ptr --> samples_sorted, however as it already copied
-    // the bits of samples over,  this is unnecessary
-    memcpy((void*)samples_sorted, (void*)samples, N * sizeof(Measurement));
-
     // Sorting samples_sorted based on magnitude of Complex numbers stored within
-    qsort(samples_sorted, N, sizeof(Measurement), compareMeasurement);
+    qsort(samples, N, sizeof(Measurement), compareMeasurement);
 
     // Variables required for
     size_t i, n;
     size_t* skip_n;
 
     n = N - n_largest_vals;
-    if (n <= 0) {
-	errorExit("\n<q_3k> Performing IDFT on n <= 0 values.");
+    if (n <= 0 || n > N) {
+	printf("n = %ld\n", n);
+	errorExit("\n<q_3k> Performing IDFT on invalid n.");
     }
 
+    // Allocate memory for values to skip
     skip_n = (size_t*)malloc(n * sizeof(size_t));
     if (!skip_n) {
 	errorExit("\n<q_3k> malloc failed.\n");
     }
 
+    // Copy up to n-th value into skip_n
     for (i = 0; i < n; ++i) {
-	skip_n[i] = samples_sorted[i].n;
+	skip_n[i] = samples[i].n;
     }
+
+    // Resort back into order by index.
+    qsort((void*)samples, N, sizeof(Measurement), compareSize_t);
 
     // Create array of Complex vals from original samples set
     Complex* z_arr = (Complex*)malloc(N * sizeof(Complex));
     if (!z_arr) {
 	errorExit("\n<q_3k> malloc failed.\n");
     }
+
+    // Copy Complex data to perform IDFT on.
     for (i = 0; i < N; ++i) {
 	z_arr[i] = samples[i].z;
     }
 
-    result = IDFT(z_arr, N, skip_n, 196);
+    result = IDFT(z_arr, N, skip_n, n);
 
+    // Free memory to prevent leak.
+    free(skip_n);
     free(z_arr);
 
     return result;
@@ -576,7 +571,7 @@ int main(int argc, char* argv[])
 
     Measurement* H3 = q_3j(h3, N);
 
-    Complex* i_h3 = q_3k(H3, N, 4);
+    Complex* i_h3 = q_3k(H3, N, 10);
 
     times = (double*)realloc(times, N * sizeof(double));
     if (!times) {
