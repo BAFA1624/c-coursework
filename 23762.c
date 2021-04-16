@@ -409,7 +409,7 @@ Measurement* q_3i(const char* filename, int N)
     }
 
     int n, sz = 0;
-    double time, real = 0., imag = 0.;
+    double time = 0., real = 0., imag = 0.;
     Complex z;
 
     // Use fscanf to read from file
@@ -485,7 +485,7 @@ Complex* q_3k(Measurement* samples, const int N, int n_largest_vals)
 
     n = N - n_largest_vals;
     if (n <= 0 || n > N) {
-	printf("n = %ld\n", n);
+	printf("n = %d\n", n);
 	errorExit("\n<q_3k> Performing IDFT on invalid n.");
     }
 
@@ -532,7 +532,7 @@ void q_3l(const double* times, const Complex* data, const int N, const char* fil
 // -----------------------------------------------------
 // main()
 
-int main(int argc, char* argv[])
+int main()
 {
     // Set number of samples & generate time values
     int i, N = 100;
