@@ -293,17 +293,15 @@ Complex* IDFT(const Complex* samples, const int N, const int* skip_n, const int 
 Complex** q_3b(const double* times, const int N)
 {
     // Allocating memory for arrays to store results in
-    Complex* h1_vals = (Complex*)malloc(N * sizeof(Complex));
-    Complex* h2_vals = (Complex*)malloc(N * sizeof(Complex));
     Complex** results = (Complex**)malloc(2 * sizeof(Complex*));
 
-    if (!h1_vals || !h2_vals || !results) {
+    if (!results) {
 	errorExit("\n<q_3b> malloc failed.\n");
     }
 
     // Generate values of h_1(t) & h_2(t)
-    h1_vals = linspaceComplex(h_1, times, N);
-    h2_vals = linspaceComplex(h_2, times, N);
+    Complex* h1_vals = linspaceComplex(h_1, times, N);
+    Complex* h2_vals = linspaceComplex(h_2, times, N);
 
     // Write to file
     writeComplex(times, h1_vals, N, "h1.txt");
@@ -470,12 +468,6 @@ Measurement* q_3j(const Measurement* data, const int N)
 // Applies IDFT to 4 terms of H3 with largest amplitude
 Complex* q_3k(Measurement* samples, const int N, int n_largest_vals)
 {
-    // Allocating memory for transformed version of data
-    Complex* result = (Complex*)malloc(N * sizeof(Complex));
-    if (!result) {
-	errorExit("\n<q_3k> malloc failed.\n");
-    }
-
     // Sorting samples_sorted based on magnitude of Complex numbers stored within
     qsort(samples, N, sizeof(Measurement), compareMeasurement);
 
@@ -514,7 +506,7 @@ Complex* q_3k(Measurement* samples, const int N, int n_largest_vals)
 	z_arr[i] = samples[i].z;
     }
 
-    result = IDFT(z_arr, N, skip_n, n);
+    Complex* result = IDFT(z_arr, N, skip_n, n);
 
     // Free memory to prevent leak.
     free(skip_n);
