@@ -11,6 +11,8 @@ prof*
 h3.txt
 build/h3.txt
 *.plist
+.idea/*
+test
 
 # Prerequisites
 *.d
